@@ -32,11 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/business/update', [BusinessController::class, 'updateBusinessProfile']);
 });
 
-// Temporary route to check business data
-Route::get('/businesses/check', function() {
-    $businesses = App\Models\Business::with('user')->get();
-    return response()->json(['businesses' => $businesses]);
-});
+// This route has been replaced by the BusinessController check method above
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
