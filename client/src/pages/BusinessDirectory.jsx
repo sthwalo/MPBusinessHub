@@ -51,7 +51,7 @@ function BusinessDirectory() {
           rating: null, // No ratings yet
           contact: {
             phone: business.phone,
-            email: business.user.email,
+            email: business.user ? business.user.email : null,
             website: business.website,
             address: business.address
           },
