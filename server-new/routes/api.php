@@ -17,9 +17,10 @@ use App\Http\Controllers\BusinessController;
 */
 
 // Public routes
-Route::post('/businesses/register', [BusinessRegistrationController::class, 'register']);
 Route::get('/businesses', [BusinessController::class, 'index']);
 Route::get('/businesses/check', [BusinessController::class, 'check']);
+Route::post('/businesses/register', [BusinessRegistrationController::class, 'register']);
+// Dynamic route with {id} parameter must come after specific routes
 Route::get('/businesses/{id}', [BusinessController::class, 'show']);
 
 // Authentication routes
