@@ -103,3 +103,7 @@ jspm_packages/
 
 # Yarn Integrity file
 .yarn-integrity
+
+#Documentation
+PROJECT_ROADMAP.md
+apidev.md
