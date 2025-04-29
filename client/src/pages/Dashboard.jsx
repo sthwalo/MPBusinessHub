@@ -6,6 +6,7 @@ import ManageProducts from '../components/dashboard/ManageProducts'
 import AdvertsManagement from '../components/dashboard/AdvertsManagement'
 import PaymentHistory from '../components/dashboard/PaymentHistory'
 import UpgradePlan from '../components/dashboard/UpgradePlan'
+import SessionManagement from './SessionManagement'
 
 function Dashboard() {
   const [businessData, setBusinessData] = useState(null)
@@ -271,6 +272,20 @@ function Dashboard() {
                   </Link>
                 </li>
                 <li className="border-t mt-4 pt-4">
+                  <Link 
+                    to="/dashboard/session-management" 
+                    className="block px-4 py-2 rounded-md hover:bg-brand-gray-100 text-brand-gray-700"
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <div className="flex items-center">
+                      <svg className="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      Manage Sessions
+                    </div>
+                  </Link>
+                </li>
+                <li>
                   <button 
                     onClick={handleLogout}
                     className="block w-full text-left px-4 py-2 rounded-md hover:bg-brand-gray-100 text-brand-gray-700"
@@ -296,6 +311,7 @@ function Dashboard() {
               <Route path="/adverts" element={<AdvertsManagement businessData={businessData} />} />
               <Route path="/payments" element={<PaymentHistory businessData={businessData} />} />
               <Route path="/upgrade" element={<UpgradePlan businessData={businessData} />} />
+              <Route path="/session-management" element={<SessionManagement />} />
             </Routes>
           </main>
         </div>

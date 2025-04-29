@@ -7,6 +7,7 @@ use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\EmailVerificationController;
+use App\Http\Controllers\SessionController;
 use App\Models\User;
 
 /*
@@ -64,4 +65,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+});
+
+// Session management routes
+// Session management routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/sessions', [SessionController::class, 'index']);
+    Route::delete('/sessions/{token}', [SessionController::class, 'destroy']);
+    Route::delete('/sessions', [SessionController::class, 'destroyAll']);
+    Route::post('/sessions/activity', [SessionController::class, 'updateActivity']);
 });
