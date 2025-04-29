@@ -86,7 +86,7 @@ class AuthController extends Controller
         $business = Business::where('user_id', $user->id)->first();
     
         // Create token
-        $token = $user->createToken('auth-token')->plainTextToken;
+        $token = $user->createToken($request->device_name ?? $request->ip())->plainTextToken;
     
         return response()->json([
             'success' => true,
