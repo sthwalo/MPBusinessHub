@@ -304,15 +304,25 @@ function Dashboard() {
 
           {/* Main content area */}
           <main className="flex-1 bg-brand-white rounded-lg shadow-brand-md p-6">
-            <Routes>
-              <Route path="/" element={<DashboardHome businessData={businessData} />} />
-              <Route path="/profile" element={<BusinessProfile businessData={businessData} updateBusinessData={updateBusinessData} />} />
-              <Route path="/products" element={<ManageProducts businessData={businessData} />} />
-              <Route path="/adverts" element={<AdvertsManagement businessData={businessData} />} />
-              <Route path="/payments" element={<PaymentHistory businessData={businessData} />} />
-              <Route path="/upgrade" element={<UpgradePlan businessData={businessData} />} />
-              <Route path="/session-management" element={<SessionManagement />} />
-            </Routes>
+            {businessData ? (
+              <Routes>
+                <Route path="/" element={<DashboardHome businessData={businessData} />} />
+                <Route path="/profile" element={<BusinessProfile businessData={businessData} updateBusinessData={updateBusinessData} />} />
+                <Route path="/products" element={<ManageProducts businessData={businessData} />} />
+                <Route path="/adverts" element={<AdvertsManagement businessData={businessData} />} />
+                <Route path="/payments" element={<PaymentHistory businessData={businessData} />} />
+                <Route path="/upgrade" element={<UpgradePlan businessData={businessData} />} />
+                <Route path="/session-management" element={<SessionManagement />} />
+              </Routes>
+            ) : (
+              <div className="text-center py-12">
+                <h2 className="text-2xl font-bold mb-4">No Business Profile Found</h2>
+                <p className="mb-6">You need to register a business to access the dashboard features.</p>
+                <Link to="/register" className="px-4 py-2 bg-brand-black text-brand-white font-medium rounded hover:bg-brand-gray-800 transition-colors">
+                  Register a Business
+                </Link>
+              </div>
+            )}
           </main>
         </div>
       </div>
