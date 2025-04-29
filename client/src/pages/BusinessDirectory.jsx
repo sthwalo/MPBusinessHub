@@ -157,11 +157,11 @@ function BusinessDirectory() {
         </div>
         
         {/* Debug toggle button */}
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <button onClick={() => setDebugMode(!debugMode)}>
             {debugMode ? 'Hide Debug' : 'Show Debug'}
           </button>
-        </div>
+        </div> */}
       
         {/* Debug information display */}
         {debugMode && (
