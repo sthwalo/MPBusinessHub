@@ -4,6 +4,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BusinessRegistrationController;
 use App\Http\Controllers\BusinessController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\EmailVerificationController;
+use App\Models\User;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,8 +28,28 @@ Route::post('/businesses/register', [BusinessRegistrationController::class, 'reg
 Route::get('/businesses/{id}', [BusinessController::class, 'show']);
 
 // Authentication routes
-Route::post('/auth/login', [App\Http\Controllers\AuthController::class, 'login']);
-Route::post('/auth/logout', [App\Http\Controllers\AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+
+// Password Reset Routes
+Route::post('/password/email', [PasswordResetController::class, 'sendResetLinkEmail']);
+Route::post('/password/reset', [PasswordResetController::class, 'reset']);
+
+// Email Verification Routes
+Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])->name('verification.verify');
+Route::post('/email/verification-notification', [EmailVerificationController::class, 'sendVerificationEmail'])
+    ->middleware(['auth:sanctum', 'throttle:6,1'])
+    ->name('verification.send');
+
+// Test route for verification email
+Route::get('/test-verification-email/{email}', function($email) {
+    $user = User::where('email', $email)->first();
+    if ($user) {
+        $user->sendEmailVerificationNotification();
+        return response()->json(['message' => 'Verification email sent to ' . $email]);
+    }
+    return response()->json(['message' => 'User not found'], 404);
+});
 
 // Protected business routes
 Route::middleware('auth:sanctum')->group(function () {
