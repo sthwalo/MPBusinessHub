@@ -56,6 +56,7 @@ Route::get('/test-verification-email/{email}', function($email) {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/business/details', [BusinessController::class, 'getBusinessDetails']);
     Route::put('/business/update', [BusinessController::class, 'updateBusinessProfile']);
+    Route::delete('/business/remove-all', [BusinessController::class, 'removeAllBusinesses']); // Admin route to remove all businesses
 });
 
 // This route has been replaced by the BusinessController check method above

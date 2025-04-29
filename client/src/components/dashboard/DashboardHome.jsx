@@ -61,10 +61,13 @@ function DashboardHome({ businessData }) {
           <div>
             <div className="flex items-center">
               <span className={`inline-block w-3 h-3 rounded-full mr-2 ${businessData.subscription?.status === 'active' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-              <span className="font-medium">{businessData.subscription?.status === 'active' ? 'Active' : 'Inactive'}</span>
+              <span className="font-medium">{businessData.package_type || 'Basic'} Package</span>
+              {businessData.subscription?.status === 'active' && <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Active</span>}
+              {businessData.subscription?.status === 'inactive' && <span className="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">Inactive</span>}
+              {businessData.subscription?.status === 'pending' && <span className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Pending</span>}
             </div>
             <p className="text-gray-600 mt-1">
-              {businessData.package_type} Package {businessData.subscription?.amount ? `- R${businessData.subscription.amount}/month` : ''}
+              {businessData.subscription?.amount ? `${businessData.subscription.amount} / month` : 'Free tier'}
             </p>
             <p className="text-gray-600 mt-1">
               {businessData.subscription?.next_billing_date ? `Next billing date: ${new Date(businessData.subscription.next_billing_date).toLocaleDateString()}` : 'No active subscription'}

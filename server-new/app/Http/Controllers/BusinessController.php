@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class BusinessController extends Controller
 {
@@ -72,13 +73,29 @@ class BusinessController extends Controller
         $user = Auth::user();
         
         // Find the business associated with the user
-        $business = Business::where('user_id', $user->id)->first();
+        $business = Business::where('user_id', $user->id)->with('operatingHours')->first();
         
         if (!$business) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Business not found'
             ], 404);
+        }
+        
+        // Format operating hours
+        $operatingHours = [];
+        $daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        
+        // Initialize with default closed values
+        foreach ($daysOfWeek as $day) {
+            $operatingHours[$day] = 'Closed';
+        }
+        
+        // Override with actual values from database
+        foreach ($business->operatingHours as $hours) {
+            if (!$hours->is_closed && $hours->opening_time && $hours->closing_time) {
+                $operatingHours[$hours->day_of_week] = $hours->opening_time . ' - ' . $hours->closing_time;
+            }
         }
         
         // Transform business data to match client's expected format
@@ -104,15 +121,7 @@ class BusinessController extends Controller
                 'contacts' => 0,
                 'reviews' => 0
             ],
-            'operatingHours' => [
-                'monday' => '8:00 - 18:00',
-                'tuesday' => '8:00 - 18:00',
-                'wednesday' => '8:00 - 18:00',
-                'thursday' => '8:00 - 18:00',
-                'friday' => '8:00 - 18:00',
-                'saturday' => '9:00 - 17:00',
-                'sunday' => '9:00 - 16:00'
-            ]
+            'operatingHours' => $operatingHours
         ];
         
         return response()->json([
@@ -121,6 +130,12 @@ class BusinessController extends Controller
         ]);
     }
 
+    /**
+     * Update the authenticated user's business profile
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
     /**
      * Update the authenticated user's business profile
      * 
@@ -153,6 +168,7 @@ class BusinessController extends Controller
                 'email' => 'required|email|max:255',
                 'website' => 'nullable|string|max:255',
                 'address' => 'required|string|max:255',
+                'operatingHours' => 'nullable|array',
             ], [
                 'businessName.required' => 'Business name is required',
                 'businessName.max' => 'Business name cannot exceed 255 characters',
@@ -198,10 +214,60 @@ class BusinessController extends Controller
             $business->address = $request->address;
             $business->save();
             
+            // Update operating hours if provided
+            if ($request->has('operatingHours') && is_array($request->operatingHours)) {
+                foreach ($request->operatingHours as $day => $hours) {
+                    // Skip if day is not valid
+                    if (!in_array($day, ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])) {
+                        continue;
+                    }
+                    
+                    $isClosed = ($hours === 'Closed');
+                    $openingTime = null;
+                    $closingTime = null;
+                    
+                    // Parse hours if not closed
+                    if (!$isClosed) {
+                        $timeParts = explode(' - ', $hours);
+                        if (count($timeParts) === 2) {
+                            $openingTime = trim($timeParts[0]);
+                            $closingTime = trim($timeParts[1]);
+                        }
+                    }
+                    
+                    // Update or create operating hours
+                    OperatingHour::updateOrCreate(
+                        ['business_id' => $business->id, 'day_of_week' => $day],
+                        [
+                            'opening_time' => $openingTime,
+                            'closing_time' => $closingTime,
+                            'is_closed' => $isClosed
+                        ]
+                    );
+                }
+            }
+            
             // Update the user's email if it has changed
             if ($user->email !== $request->email) {
                 $user->email = $request->email;
                 $user->save();
+            }
+            
+            // Get updated operating hours
+            $business->load('operatingHours');
+            $operatingHours = [];
+            $daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            
+            // Initialize with default closed values
+            foreach ($daysOfWeek as $day) {
+                $operatingHours[$day] = 'Closed';
+            }
+            
+            // Override with actual values from database
+            foreach ($business->operatingHours as $hours) {
+                if (!$hours->is_closed && $hours->opening_time && $hours->closing_time) {
+                    $operatingHours[$hours->day_of_week] = $hours->opening_time . ' - ' . $hours->closing_time;
+                }
             }
             
             // Return updated business data
@@ -218,7 +284,7 @@ class BusinessController extends Controller
                     'phone' => $business->phone,
                     'email' => $user->email,
                     'website' => $business->website,
-                    'operatingHours' => $request->operatingHours ?? null
+                    'operatingHours' => $operatingHours
                 ]
             ]);
         } catch (\Exception $e) {
@@ -229,7 +295,6 @@ class BusinessController extends Controller
             ], 500);
         }
     }
-
     /**
      * Get a listing of businesses for the business directory
      * 
@@ -288,7 +353,7 @@ class BusinessController extends Controller
     {
         try {
             // Find the business by ID
-            $business = Business::with('user')->find($id);
+            $business = Business::with(['user', 'operatingHours'])->find($id);
             
             if (!$business) {
                 return response()->json([
@@ -332,6 +397,53 @@ class BusinessController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'An error occurred while fetching business details: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove all businesses from the database (admin use only)
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function removeAllBusinesses(Request $request): JsonResponse
+    {
+        try {
+            // Check for admin access - this is a destructive operation
+            // In a production environment, you would want more robust authentication
+            $user = Auth::user();
+            if (!$user || $user->email !== config('app.admin_email')) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Unauthorized. Admin access required.'
+                ], 403);
+            }
+
+            // Get count before deletion
+            $count = Business::count();
+            
+            // Delete all operating hours first (respecting foreign key constraints)
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            
+            // Delete all businesses
+            Business::truncate();
+            
+            // Reset auto-increment
+            DB::statement('ALTER TABLE businesses AUTO_INCREMENT = 1;');
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => $count . ' businesses have been removed from the directory.',
+                'data' => [
+                    'count' => $count
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred while removing businesses: ' . $e->getMessage()
             ], 500);
         }
     }
