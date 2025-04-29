@@ -37,7 +37,7 @@ class BusinessRegistrationController extends Controller
             
             return response()->json([
                 'success' => true,
-                'message' => 'Business registered successfully',
+                'message' => 'Business registered successfully. Please check your email to verify your account.',
                 'data' => $result
             ], 201);
         } catch (Exception $e) {

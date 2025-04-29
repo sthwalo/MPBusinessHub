@@ -59,6 +59,9 @@ class BusinessRegistrationService
                 'password' => $data['password'], // Will be hashed by model mutator
             ]);
 
+            // Send email verification notification
+            $user->sendEmailVerificationNotification();
+
             // Create business
             $business = $this->businessRepository->createBusiness([
                 'name' => $data['businessName'],
@@ -77,9 +80,17 @@ class BusinessRegistrationService
 
             return [
                 'token' => $token,
-                'user_id' => $user->id,
-                'business_id' => $business->id,
-                'status' => $business->status
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'email_verified' => false
+                ],
+                'business' => [
+                    'id' => $business->id,
+                    'name' => $business->name,
+                    'status' => $business->status
+                ]
             ];
         } catch (Exception $e) {
             DB::rollBack();

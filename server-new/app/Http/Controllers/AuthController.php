@@ -35,6 +35,17 @@ class AuthController extends Controller
             ]);
         }
 
+        // Check if email is verified
+        if (!$user->hasVerifiedEmail()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email not verified. Please check your email for verification link.',
+                'email_verified' => false,
+                'user_id' => $user->id,
+                'email' => $user->email
+            ], 403);
+        }
+
         // Find associated business
         $business = Business::where('user_id', $user->id)->first();
 
@@ -50,6 +61,7 @@ class AuthController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+                    'email_verified' => true
                 ],
                 'business' => $business ? [
                     'id' => $business->id,
