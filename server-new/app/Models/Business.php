@@ -43,4 +43,12 @@ class Business extends Model
     {
         return $this->hasMany(OperatingHour::class);
     }
+
+    /**
+     * Get the reviews for the business.
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
 }

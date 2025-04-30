@@ -76,3 +76,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/sessions', [SessionController::class, 'destroyAll']);
     Route::post('/sessions/activity', [SessionController::class, 'updateActivity']);
 });
+
+// Review routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/reviews', [App\Http\Controllers\ReviewController::class, 'store']);
+});

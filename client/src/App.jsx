@@ -14,6 +14,7 @@ import ResetPassword from './pages/ResetPassword'
 import VerifyEmail from './pages/VerifyEmail'
 import ResendVerification from './pages/ResendVerification'
 import NotFound from './pages/NotFound'
+import Pricing from './pages/Pricing'
 /* App.css import removed - using Tailwind CSS now */
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
           />
           <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/pricing" element={<Pricing />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/verify-email" element={<VerifyEmail />} />

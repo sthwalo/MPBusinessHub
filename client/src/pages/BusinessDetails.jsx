@@ -7,12 +7,18 @@ function BusinessDetails() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [userRating, setUserRating] = useState(0)
+  const [reviewText, setReviewText] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [reviewSuccess, setReviewSuccess] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
+    const token = localStorage.getItem('mpbh_token')
+    setIsAuthenticated(!!token)
+    
     const fetchBusinessDetails = async () => {
       try {
         setLoading(true)
-        // Update fetch URL to use /api prefix
         const response = await fetch(`/api/businesses/${id}`, {
           headers: {
             'Accept': 'application/json',
@@ -35,39 +41,85 @@ function BusinessDetails() {
     }
     
     fetchBusinessDetails()
-    
-    // Scroll to top when component mounts
     window.scrollTo(0, 0)
   }, [id])
 
-  const handleRatingSubmit = async (rating) => {
+  const handleRatingChange = (rating) => {
     setUserRating(rating)
-    // In production, this would send to the API
-    // await fetch('/api/ratings', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ business_id: id, rating })
-    // })
-    
-    // For demo, just show a success message
-    alert(`Thank you for rating ${business.name} ${rating} stars!`)
   }
 
-  // Determine what features to show based on package tier
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault()
+    
+    if (!isAuthenticated) {
+      alert('Please log in to submit a review')
+      return
+    }
+    
+    if (userRating === 0) {
+      alert('Please select a rating')
+      return
+    }
+    
+    setIsSubmitting(true)
+    
+    try {
+      const token = localStorage.getItem('mpbh_token')
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/reviews`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          business_id: business.id,
+          rating: userRating,
+          comment: reviewText
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to submit review')
+      }
+      
+      const newReview = data.data
+      setBusiness(prev => ({
+        ...prev,
+        reviews: [...(prev.reviews || []), newReview],
+        rating: prev.reviews && prev.reviews.length > 0 
+          ? ((prev.reviews.reduce((sum, r) => sum + r.rating, 0) + userRating) / (prev.reviews.length + 1))
+          : userRating
+      }))
+      
+      setUserRating(0)
+      setReviewText('')
+      setReviewSuccess(true)
+      setTimeout(() => setReviewSuccess(false), 5000)
+    } catch (error) {
+      console.error('Error submitting review:', error)
+      alert('Failed to submit review. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   const canShowProducts = business?.package_type === 'Silver' || business?.package_type === 'Gold'
   const canShowContactInfo = business?.package_type !== 'Basic'
-  
-  // Function to render star rating selector
-  const RatingStars = () => (
+
+  const RatingStars = ({ interactive = false, value = 0, onChange }) => (
     <div className="flex items-center">
       {[1, 2, 3, 4, 5].map((star) => (
         <button
           key={star}
-          onClick={() => handleRatingSubmit(star)}
-          className="text-gray-300 hover:text-yellow-400 focus:outline-none"
+          type="button"
+          onClick={() => interactive && onChange && onChange(star)}
+          className={`${interactive ? 'cursor-pointer hover:text-yellow-400' : 'cursor-default'} focus:outline-none`}
+          disabled={!interactive}
         >
           <svg 
-            className={`h-8 w-8 ${userRating >= star ? 'text-yellow-400' : ''}`}
+            className={`h-8 w-8 ${value >= star ? 'text-yellow-400' : 'text-gray-300'}`}
             fill="currentColor" 
             viewBox="0 0 20 20"
           >
@@ -75,6 +127,66 @@ function BusinessDetails() {
           </svg>
         </button>
       ))}
+    </div>
+  )
+
+  const ReviewForm = () => (
+    <div className="bg-brand-white rounded-lg shadow-brand-md p-6 mb-6">
+      <h3 className="text-xl font-bold font-serif text-brand-black mb-4">Write a Review</h3>
+      
+      {!isAuthenticated ? (
+        <div className="bg-brand-gray-100 p-4 rounded-lg text-center">
+          <p className="text-brand-gray-700 mb-3">Please log in to write a review</p>
+          <Link to="/login" className="px-4 py-2 bg-brand-black text-brand-white rounded-md hover:bg-brand-gray-800 transition-colors">
+            Log In
+          </Link>
+        </div>
+      ) : reviewSuccess ? (
+        <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg p-4">
+          <div className="flex items-center">
+            <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Thank you! Your review has been submitted.</span>
+          </div>
+        </div>
+      ) : (
+        <form onSubmit={handleReviewSubmit}>
+          <div className="mb-4">
+            <label className="block text-brand-gray-700 mb-2">Your Rating</label>
+            <RatingStars interactive={true} value={userRating} onChange={handleRatingChange} />
+          </div>
+          
+          <div className="mb-4">
+            <label htmlFor="reviewText" className="block text-brand-gray-700 mb-2">Your Review</label>
+            <textarea
+              id="reviewText"
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              className="w-full px-3 py-2 border border-brand-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-black"
+              rows="4"
+              placeholder="Share your experience with this business..."
+              required
+            ></textarea>
+          </div>
+          
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className={`px-4 py-2 bg-brand-black text-brand-white rounded-md hover:bg-brand-gray-800 transition-colors ${isSubmitting ? 'opacity-75 cursor-wait' : ''}`}
+          >
+            {isSubmitting ? (
+              <>
+                <svg className="animate-spin h-5 w-5 mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Submitting...
+              </>
+            ) : 'Submit Review'}
+          </button>
+        </form>
+      )}
     </div>
   )
 
@@ -105,7 +217,6 @@ function BusinessDetails() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Back Button */}
       <Link to="/directory" className="flex items-center text-blue-600 mb-6 hover:text-blue-800">
         <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -113,87 +224,85 @@ function BusinessDetails() {
         Back to Directory
       </Link>
       
-      {/* Business Header */}
-      <div className="flex flex-col lg:flex-row mb-8 gap-8">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">{business.name}</h1>
+          <div className="flex items-center text-gray-600 mb-1">
+            <svg className="h-5 w-5 mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            {business.district}
+          </div>
+          <div className="flex items-center">
+            <svg className="h-5 w-5 mr-1 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+            <span className="ml-1">{business.rating ? business.rating.toFixed(1) : '0.0'} ({business.reviews?.length || 0} reviews)</span>
+          </div>
+        </div>
+        
+        {business.package_type !== 'Basic' && (
+          <div className="mt-4 md:mt-0">
+            <span className="inline-block bg-gray-200 text-gray-800 text-xs px-2 py-1 rounded-full font-medium uppercase">
+              {business.package_type} Package
+            </span>
+          </div>
+        )}
+      </div>
+      
+      <div className="flex flex-col lg:flex-row gap-8">
         <div className="lg:w-2/3">
-          {/* Image Gallery */}
-          <div className="bg-white rounded-lg overflow-hidden shadow-md">
-            <div className="relative h-96">
-              <img 
-                src={business.images?.[0] || '/assets/images/placeholder.jpg'} 
-                alt={business.name} 
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-6">
-                <div className="flex items-center mb-2">
-                  <span className={`badge ${business.package_type === 'Gold' ? 'badge-gold' : business.package_type === 'Silver' ? 'badge-silver' : business.package_type === 'Bronze' ? 'badge-bronze' : 'badge-basic'}`}>
-                    {business.package_type}
-                  </span>
-                  <span className="badge bg-blue-600 text-white ml-2">{business.category}</span>
-                </div>
-                <h1 className="text-3xl font-bold text-white">{business.name}</h1>
-                <div className="flex items-center text-white mt-2">
-                  <div className="flex items-center mr-4">
-                    <svg className="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                    <span className="ml-1">{business.rating ? business.rating.toFixed(1) : '0.0'} ({business.reviews?.length || 0} reviews)</span>
-                  </div>
-                  <div className="text-white">{business.district}</div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Thumbnail Gallery */}
-            {business.images?.length > 1 && (
-              <div className="flex p-4 space-x-2 overflow-x-auto">
-                {business.images.map((image, index) => (
-                  <div key={index} className="flex-shrink-0 w-24 h-24 cursor-pointer rounded overflow-hidden">
-                    <img src={image} alt={`${business.name} ${index + 1}`} className="w-full h-full object-cover" />
-                  </div>
-                ))}
-              </div>
+          <div className="bg-gray-200 rounded-lg h-64 mb-6 flex items-center justify-center">
+            {business.images?.[0] ? (
+              <img src={business.images[0]} alt={business.name} className="w-full h-full object-cover rounded-lg" />
+            ) : (
+              <svg className="h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
             )}
           </div>
           
-          {/* Description */}
-          <div className="mt-8 bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-bold mb-4">About {business.name}</h2>
-            <p className="text-gray-700 mb-6 whitespace-pre-line">{business.description}</p>
-            
-            {/* Rate this business */}
-            <div className="mt-8 border-t pt-6">
-              <h3 className="text-lg font-semibold mb-2">Rate this business</h3>
-              <div className="flex items-center">
-                <RatingStars />
-                <span className="ml-2 text-sm text-gray-500">
-                  {userRating > 0 ? `You rated: ${userRating} stars` : 'Select rating'}
-                </span>
-              </div>
-            </div>
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-xl font-bold mb-4">About {business.name}</h2>
+            <p className="text-gray-700">
+              {business.description || 'No description available.'}
+            </p>
           </div>
           
-          {/* Products/Services - Only for Silver and Gold tiers */}
-          {canShowProducts && business.products?.length > 0 && (
-            <div className="mt-8 bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-2xl font-bold mb-6">Products & Services</h2>
-              <div className="grid md:grid-cols-2 gap-6">
+          {canShowProducts && business.products && business.products.length > 0 && (
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <h2 className="text-xl font-bold mb-4">Products & Services</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {business.products.map(product => (
-                  <div key={product.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <h3 className="font-bold text-lg mb-1">{product.name}</h3>
-                    <div className="text-lg font-medium text-green-600 mb-2">R{product.price.toFixed(2)}</div>
-                    <p className="text-gray-600">{product.description}</p>
-                    <button className="mt-4 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors w-full">
-                      Contact for Details
-                    </button>
+                  <div key={product.id} className="border rounded-lg overflow-hidden">
+                    <div className="h-48 bg-gray-200">
+                      {product.image ? (
+                        <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <svg className="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-bold text-lg mb-1">{product.name}</h3>
+                      <p className="text-gray-700 text-sm mb-2">{product.description}</p>
+                      {product.price && (
+                        <div className="font-bold text-green-700">R{product.price.toFixed(2)}</div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
           
-          {/* Reviews */}
-          <div className="mt-8 bg-white rounded-lg shadow-md p-6">
+          <ReviewForm />
+          
+          <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-2xl font-bold mb-6">Customer Reviews</h2>
             {business.reviews?.length > 0 ? (
               <div className="space-y-6">
@@ -206,11 +315,7 @@ function BusinessDetails() {
                       </div>
                       <div className="flex items-center">
                         <div className="text-yellow-400">
-                          {[...Array(5)].map((_, i) => (
-                            <span key={i}>
-                              {i < review.rating ? 'u2605' : 'u2606'}
-                            </span>
-                          ))}
+                          <RatingStars value={review.rating} />
                         </div>
                       </div>
                     </div>
@@ -224,84 +329,50 @@ function BusinessDetails() {
           </div>
         </div>
         
-        {/* Business Info Sidebar */}
         <div className="lg:w-1/3">
-          {/* Contact Information - Only for Bronze tier and above */}
           {canShowContactInfo && (
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h2 className="text-xl font-bold mb-4">Contact Information</h2>
-              <div className="space-y-4">
-                {business.contact?.phone && (
-                  <div className="flex">
-                    <svg className="h-6 w-6 text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                    <div>
-                      <div className="text-sm text-gray-500">Phone</div>
-                      <a href={`tel:${business.contact.phone}`} className="text-blue-600 hover:text-blue-800">
-                        {business.contact.phone}
-                      </a>
-                    </div>
-                  </div>
-                )}
-                
-                {business.contact?.email && (
-                  <div className="flex">
-                    <svg className="h-6 w-6 text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <div>
-                      <div className="text-sm text-gray-500">Email</div>
-                      <a href={`mailto:${business.contact.email}`} className="text-blue-600 hover:text-blue-800 break-all">
-                        {business.contact.email}
-                      </a>
-                    </div>
-                  </div>
-                )}
-                
-                {business.contact?.website && (
-                  <div className="flex">
-                    <svg className="h-6 w-6 text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                    </svg>
-                    <div>
-                      <div className="text-sm text-gray-500">Website</div>
-                      <a href={business.contact.website || '#'} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 break-all">
-                        {business.contact.website ? business.contact.website.replace(/(^https?:\/\/|\/$)/g, '') : 'No website provided'}
-                      </a>
-                    </div>
-                  </div>
-                )}
-                
-                {business.contact?.whatsapp && (
-                  <div className="flex">
-                    <svg className="h-6 w-6 text-gray-500 mr-3" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                    </svg>
-                    <div>
-                      <div className="text-sm text-gray-500">WhatsApp</div>
-                      <a href={business.contact.whatsapp ? `https://wa.me/${business.contact.whatsapp.replace(/\D/g, '')}` : '#'} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
-                        {business.contact.whatsapp || 'No WhatsApp number provided'}
-                      </a>
-                    </div>
-                  </div>
-                )}
-                
-                {business.contact?.address && (
-                  <div className="flex">
-                    <svg className="h-6 w-6 text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <div>
-                      <div className="text-sm text-gray-500">Address</div>
-                      <address className="not-italic">{business.contact.address}</address>
-                    </div>
-                  </div>
-                )}
-              </div>
               
-              {/* Call to action buttons */}
+              {business.contact?.phone && (
+                <div className="flex items-center mb-3">
+                  <svg className="h-5 w-5 text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                  <span>{business.contact.phone}</span>
+                </div>
+              )}
+              
+              {business.contact?.email && (
+                <div className="flex items-center mb-3">
+                  <svg className="h-5 w-5 text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span>{business.contact.email}</span>
+                </div>
+              )}
+              
+              {business.contact?.website && (
+                <div className="flex items-center mb-3">
+                  <svg className="h-5 w-5 text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                  </svg>
+                  <a href={business.contact.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 truncate">
+                    {business.contact.website.replace(/(^https?:\/\/|\/$)/g, '')}
+                  </a>
+                </div>
+              )}
+              
+              {business.contact?.address && (
+                <div className="flex items-start mb-3">
+                  <svg className="h-5 w-5 text-gray-500 mr-3 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span>{business.contact.address}</span>
+                </div>
+              )}
+              
               <div className="mt-6 space-y-3">
                 {business.contact?.phone && (
                   <a 
@@ -330,7 +401,6 @@ function BusinessDetails() {
             </div>
           )}
           
-          {/* Business Hours */}
           {business.hours && (
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h2 className="text-xl font-bold mb-4">Business Hours</h2>
@@ -345,12 +415,10 @@ function BusinessDetails() {
             </div>
           )}
           
-          {/* Location Map */}
           {business.location && (
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h2 className="text-xl font-bold mb-4">Location</h2>
               <div className="h-64 bg-gray-200 rounded-lg mb-4">
-                {/* In production, this would be a Google Maps component */}
                 <div className="flex items-center justify-center h-full">
                   <p className="text-gray-500">Map would display here</p>
                 </div>
@@ -371,7 +439,6 @@ function BusinessDetails() {
             </div>
           )}
           
-          {/* Membership Upgrade Prompt (for Basic tier) */}
           {!canShowContactInfo && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
               <h3 className="text-lg font-bold text-yellow-800 mb-2">Contact Information Hidden</h3>

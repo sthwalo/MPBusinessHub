@@ -352,14 +352,49 @@ class BusinessController extends Controller
     public function show($id): JsonResponse
     {
         try {
-            // Find the business by ID
-            $business = Business::with(['user', 'operatingHours'])->find($id);
+            // Find the business by ID with relationships
+            $business = Business::with(['user', 'operatingHours', 'reviews.user'])->find($id);
             
             if (!$business) {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Business not found'
                 ], 404);
+            }
+            
+            // Calculate average rating if reviews exist
+            $averageRating = $business->reviews->count() > 0 
+                ? $business->reviews->avg('rating') 
+                : null;
+            
+            // Format reviews if they exist
+            $formattedReviews = $business->reviews->map(function ($review) {
+                return [
+                    'id' => $review->id,
+                    'rating' => $review->rating,
+                    'comment' => $review->comment,
+                    'created_at' => $review->created_at->format('Y-m-d H:i:s'),
+                    'user' => [
+                        'id' => $review->user->id,
+                        'name' => $review->user->name,
+                    ]
+                ];
+            })->values()->all();
+            
+            // Format operating hours
+            $operatingHours = [];
+            $daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            
+            // Initialize with default closed values
+            foreach ($daysOfWeek as $day) {
+                $operatingHours[$day] = 'Closed';
+            }
+            
+            // Override with actual values from database
+            foreach ($business->operatingHours as $hours) {
+                if (!$hours->is_closed && $hours->opening_time && $hours->closing_time) {
+                    $operatingHours[$hours->day_of_week] = $hours->opening_time . ' - ' . $hours->closing_time;
+                }
             }
             
             // Transform business data to match client's expected format
@@ -370,7 +405,7 @@ class BusinessController extends Controller
                 'district' => $business->district,
                 'description' => $business->description,
                 'package_type' => 'Basic', // Default to Basic tier for now
-                'rating' => null, // No ratings yet
+                'rating' => $averageRating, // Use calculated average or null
                 'contact' => [
                     'phone' => $business->phone,
                     'email' => $business->user->email,
@@ -378,17 +413,9 @@ class BusinessController extends Controller
                     'address' => $business->address,
                     'whatsapp' => $business->phone // Using phone as WhatsApp for now
                 ],
-                'hours' => [
-                    'monday' => '8:00 - 17:00',
-                    'tuesday' => '8:00 - 17:00',
-                    'wednesday' => '8:00 - 17:00',
-                    'thursday' => '8:00 - 17:00',
-                    'friday' => '8:00 - 17:00',
-                    'saturday' => '9:00 - 14:00',
-                    'sunday' => 'Closed'
-                ],
+                'hours' => $operatingHours,
                 'products' => [],
-                'reviews' => [],
+                'reviews' => $formattedReviews,
                 'images' => []
             ];
             
@@ -400,7 +427,6 @@ class BusinessController extends Controller
             ], 500);
         }
     }
-
     /**
      * Remove all businesses from the database (admin use only)
      * 
