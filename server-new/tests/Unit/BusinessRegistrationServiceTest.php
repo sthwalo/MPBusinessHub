@@ -57,12 +57,13 @@ class BusinessRegistrationServiceTest extends TestCase
 
         // Assert the result structure
         $this->assertArrayHasKey('token', $result);
-        $this->assertArrayHasKey('user_id', $result);
-        $this->assertArrayHasKey('business_id', $result);
-        $this->assertArrayHasKey('status', $result);
+        $this->assertArrayHasKey('user', $result);
+        $this->assertArrayHasKey('business', $result);
+        $this->assertArrayHasKey('id', $result['user']);
+        $this->assertArrayHasKey('id', $result['business']);
 
         // Assert the user was created
-        $user = User::find($result['user_id']);
+        $user = User::find($result['user']['id']);
         $this->assertNotNull($user);
         $this->assertEquals('test@example.com', $user->email);
         
@@ -70,7 +71,7 @@ class BusinessRegistrationServiceTest extends TestCase
         $this->assertTrue(Hash::check('password123', $user->password));
 
         // Assert the business was created
-        $business = Business::find($result['business_id']);
+        $business = Business::find($result['business']['id']);
         $this->assertNotNull($business);
         $this->assertEquals('Test Business', $business->name);
         $this->assertEquals('Tourism', $business->category);
@@ -183,9 +184,9 @@ class BusinessRegistrationServiceTest extends TestCase
 
         // Assert the result
         $this->assertEquals('mock-token', $result['token']);
-        $this->assertEquals(1, $result['user_id']);
-        $this->assertEquals(1, $result['business_id']);
-        $this->assertEquals('pending', $result['status']);
+        $this->assertEquals(1, $result['user']['id']);
+        $this->assertEquals(1, $result['business']['id']);
+        $this->assertEquals('pending', $result['business']['status']);
     }
 
     public function tearDown(): void

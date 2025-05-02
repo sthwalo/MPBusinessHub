@@ -78,6 +78,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // Review routes
+// Review routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reviews', [App\Http\Controllers\ReviewController::class, 'store']);
 });

@@ -12,30 +12,30 @@ use Illuminate\Support\Facades\Validator;
 class ReviewController extends Controller
 {
     /**
-     * Store a newly created review in storage.
+     * Store a new review
      * 
      * @param Request $request
      * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
-        // Validate request
-        $validator = Validator::make($request->all(), [
-            'business_id' => 'required|exists:businesses,id',
-            'rating' => 'required|integer|min:1|max:5',
-            'comment' => 'nullable|string|max:1000',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
         try {
-            // Get authenticated user
+            // Validate the request
+            $validator = Validator::make($request->all(), [
+                'business_id' => 'required|exists:businesses,id',
+                'rating' => 'required|integer|min:1|max:5',
+                'comment' => 'nullable|string'
+            ]);
+            
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+            
+            // Get the authenticated user
             $user = Auth::user();
             
             // Check if user has already reviewed this business
@@ -44,30 +44,25 @@ class ReviewController extends Controller
                 ->first();
                 
             if ($existingReview) {
-                // Update existing review
-                $existingReview->update([
-                    'rating' => $request->rating,
-                    'comment' => $request->comment,
-                ]);
-                
-                $review = $existingReview;
-                $message = 'Review updated successfully';
-            } else {
-                // Create new review
-                $review = Review::create([
-                    'business_id' => $request->business_id,
-                    'user_id' => $user->id,
-                    'rating' => $request->rating,
-                    'comment' => $request->comment,
-                ]);
-                
-                $message = 'Review submitted successfully';
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'You have already reviewed this business'
+                ], 409);
             }
             
-            // Load user relationship
+            // Create the review
+            $review = Review::create([
+                'business_id' => $request->business_id,
+                'user_id' => $user->id,
+                'rating' => $request->rating,
+                'comment' => $request->comment,
+                'is_approved' => true // Auto-approve for now
+            ]);
+            
+            // Load the user relationship for the response
             $review->load('user');
             
-            // Format review for response
+            // Format the review for the response
             $formattedReview = [
                 'id' => $review->id,
                 'rating' => $review->rating,
@@ -79,16 +74,21 @@ class ReviewController extends Controller
                 ]
             ];
             
+            // Update the business average rating
+            $business = Business::find($request->business_id);
+            $allReviews = Review::where('business_id', $business->id)->get();
+            $averageRating = $allReviews->avg('rating');
+            
             return response()->json([
                 'status' => 'success',
-                'message' => $message,
+                'message' => 'Review submitted successfully',
                 'data' => $formattedReview
-            ]);
-            
+            ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'An error occurred while submitting review: ' . $e->getMessage()
+                'message' => 'Failed to submit review: ' . $e->getMessage(),
+                'debug' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
     }

@@ -65,10 +65,11 @@ function BusinessDetails() {
     
     try {
       const token = localStorage.getItem('mpbh_token')
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/reviews`, {
+      const response = await fetch(`/api/reviews`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({

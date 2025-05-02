@@ -66,7 +66,7 @@ class BusinessRegistrationControllerTest extends TestCase
         // Convert the response to array to check the structure
         $responseData = json_decode($response->getContent(), true);
         $this->assertTrue($responseData['success']);
-        $this->assertEquals('Business registered successfully', $responseData['message']);
+        $this->assertEquals('Business registered successfully. Please check your email to verify your account.', $responseData['message']);
         $this->assertEquals($serviceResponse, $responseData['data']);
     }
 
