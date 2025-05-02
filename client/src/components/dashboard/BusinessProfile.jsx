@@ -1,4 +1,84 @@
-import { useState } from 'react'
+import { useState } from 'react';
+import { iconPaths } from '../../utils/businessUtils';
+
+// Import reusable components
+import LoadingSkeleton from '../ui/LoadingSkeleton';
+import ErrorMessage from '../ui/ErrorMessage';
+
+// Form field components
+const FormField = ({ label, id, name, type = 'text', value, onChange, error, children }) => (
+  <div>
+    <label htmlFor={id} className="form-label">{label}</label>
+    {children || (
+      <input
+        type={type}
+        id={id}
+        name={name}
+        className={`form-control ${error ? 'border-red-500' : ''}`}
+        value={value}
+        onChange={onChange}
+      />
+    )}
+    {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+  </div>
+);
+
+const FormSelect = ({ label, id, name, value, onChange, error, options }) => (
+  <FormField label={label} id={id} name={name} value={value} onChange={onChange} error={error}>
+    <select
+      id={id}
+      name={name}
+      className={`form-control ${error ? 'border-red-500' : ''}`}
+      value={value}
+      onChange={onChange}
+    >
+      <option value="">Select a {label.toLowerCase()}</option>
+      {options.map(option => (
+        <option key={option} value={option}>{option}</option>
+      ))}
+    </select>
+  </FormField>
+);
+
+const FormTextarea = ({ label, id, name, rows = 3, value, onChange, error, minLength, maxLength }) => (
+  <div>
+    <label htmlFor={id} className="form-label">{label}</label>
+    <textarea
+      id={id}
+      name={name}
+      rows={rows}
+      className={`form-control ${error ? 'border-red-500' : ''}`}
+      value={value}
+      onChange={onChange}
+    ></textarea>
+    {minLength && (
+      <div className="flex justify-between mt-1">
+        <p className={`text-sm ${value.length < minLength ? 'text-red-500' : 'text-gray-500'}`}>
+          Minimum {minLength} characters
+        </p>
+        <p className="text-sm text-gray-500">
+          {value.length}/{maxLength || 1000}
+        </p>
+      </div>
+    )}
+    {error && <p className="text-red-500 text-sm">{error}</p>}
+  </div>
+);
+
+const FormSection = ({ title, children }) => (
+  <div className="bg-brand-white border border-brand-gray-200 rounded-lg p-6 mb-6">
+    <h3 className="text-lg font-bold mb-4">{title}</h3>
+    {children}
+  </div>
+);
+
+const SuccessMessage = ({ message }) => (
+  message ? (
+    <div className="bg-green-50 border border-green-200 text-green-700 rounded-md p-4 mb-6">
+      {message}
+    </div>
+  ) : null
+);
 
 function BusinessProfile({ businessData, updateBusinessData }) {
   const [formData, setFormData] = useState({
@@ -10,83 +90,83 @@ function BusinessProfile({ businessData, updateBusinessData }) {
     email: businessData.email || '',
     website: businessData.website || '',
     address: businessData.address || ''
-  })
-  const [errors, setErrors] = useState({})
-  const [isLoading, setIsLoading] = useState(false)
-  const [successMessage, setSuccessMessage] = useState('')
+  });
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Available options based on the database schema
-  const categories = ['Tourism', 'Agriculture', 'Construction', 'Events']
-  const districts = ['Mbombela', 'Emalahleni', 'Bushbuckridge']
+  const categories = ['Tourism', 'Agriculture', 'Construction', 'Events'];
+  const districts = ['Mbombela', 'Emalahleni', 'Bushbuckridge'];
 
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData(prevData => ({
       ...prevData,
       [name]: value
-    }))
+    }));
     
     // Clear error and success message when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }))
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
     if (successMessage) {
-      setSuccessMessage('')
+      setSuccessMessage('');
     }
-  }
+  };
 
   const validateForm = () => {
-    const newErrors = {}
+    const newErrors = {};
     
     if (!formData.businessName.trim()) {
-      newErrors.businessName = 'Business name is required'
+      newErrors.businessName = 'Business name is required';
     }
     
     if (!formData.category) {
-      newErrors.category = 'Please select a category'
+      newErrors.category = 'Please select a category';
     }
     
     if (!formData.district) {
-      newErrors.district = 'Please select a district'
+      newErrors.district = 'Please select a district';
     }
     
     if (!formData.description.trim()) {
-      newErrors.description = 'Business description is required'
+      newErrors.description = 'Business description is required';
     } else if (formData.description.length < 50) {
-      newErrors.description = 'Description should be at least 50 characters'
+      newErrors.description = 'Description should be at least 50 characters';
     }
     
     if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required'
+      newErrors.phone = 'Phone number is required';
     }
     
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required'
+      newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address'
+      newErrors.email = 'Please enter a valid email address';
     }
     
     if (formData.website && !/^(https?:\/\/)?[\w-]+(\.[\w-]+)+(\/[\w-./?%&=]*)?$/.test(formData.website)) {
-      newErrors.website = 'Please enter a valid website URL'
+      newErrors.website = 'Please enter a valid website URL';
     }
     
     if (!formData.address.trim()) {
-      newErrors.address = 'Business address is required'
+      newErrors.address = 'Business address is required';
     }
     
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     
     if (!validateForm()) {
-      window.scrollTo(0, 0)
-      return
+      window.scrollTo(0, 0);
+      return;
     }
     
-    setIsLoading(true)
+    setIsLoading(true);
     
     try {
       // Make the real API call to update business profile
@@ -125,29 +205,21 @@ function BusinessProfile({ businessData, updateBusinessData }) {
       setIsLoading(false);
       window.scrollTo(0, 0);
     } catch (error) {
-      setErrors({ form: error.message || 'Failed to update profile. Please try again.' })
-      setIsLoading(false)
-      window.scrollTo(0, 0)
+      setErrors({ form: error.message || 'Failed to update profile. Please try again.' });
+      setIsLoading(false);
+      window.scrollTo(0, 0);
     }
-  }
+  };
 
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6">Business Profile</h2>
       
       {/* Success message */}
-      {successMessage && (
-        <div className="bg-brand-gray-100 border border-brand-gray-200 text-brand-gray-700 rounded-md p-4 mb-6">
-          {successMessage}
-        </div>
-      )}
+      <SuccessMessage message={successMessage} />
       
       {/* Error message */}
-      {errors.form && (
-        <div className="bg-brand-gray-100 border border-brand-gray-300 text-brand-gray-700 rounded-md p-4 mb-6">
-          {errors.form}
-        </div>
-      )}
+      {errors.form && <ErrorMessage message={errors.form} />}
       
       <form onSubmit={handleSubmit}>
         <div className="bg-brand-gray-100 border border-brand-gray-200 rounded-md p-4 mb-6">
@@ -161,137 +233,102 @@ function BusinessProfile({ businessData, updateBusinessData }) {
           </p>
         </div>
         
-        <div className="bg-brand-white border border-brand-gray-200 rounded-lg p-6 mb-6">
-          <h3 className="text-lg font-bold mb-4">Basic Information</h3>
-          
+        <FormSection title="Basic Information">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="businessName" className="form-label">Business Name</label>
-              <input
-                type="text"
-                id="businessName"
-                name="businessName"
-                className={`form-control ${errors.businessName ? 'border-red-500' : ''}`}
-                value={formData.businessName}
-                onChange={handleChange}
-              />
-              {errors.businessName && <p className="text-red-500 text-sm mt-1">{errors.businessName}</p>}
-            </div>
+            <FormField
+              label="Business Name"
+              id="businessName"
+              name="businessName"
+              value={formData.businessName}
+              onChange={handleChange}
+              error={errors.businessName}
+            />
             
-            <div>
-              <label htmlFor="category" className="form-label">Business Category</label>
-              <select
-                id="category"
-                name="category"
-                className={`form-control ${errors.category ? 'border-red-500' : ''}`}
-                value={formData.category}
-                onChange={handleChange}
-              >
-                <option value="">Select a category</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-              {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
-            </div>
+            <FormSelect
+              label="Business Category"
+              id="category"
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              error={errors.category}
+              options={categories}
+            />
           </div>
           
           <div className="mt-6">
-            <label htmlFor="district" className="form-label">District</label>
-            <select
+            <FormSelect
+              label="District"
               id="district"
               name="district"
-              className={`form-control ${errors.district ? 'border-red-500' : ''}`}
               value={formData.district}
               onChange={handleChange}
-            >
-              <option value="">Select a district</option>
-              {districts.map(district => (
-                <option key={district} value={district}>{district}</option>
-              ))}
-            </select>
-            {errors.district && <p className="text-red-500 text-sm mt-1">{errors.district}</p>}
+              error={errors.district}
+              options={districts}
+            />
           </div>
           
           <div className="mt-6">
-            <label htmlFor="description" className="form-label">Business Description</label>
-            <textarea
+            <FormTextarea
+              label="Business Description"
               id="description"
               name="description"
-              rows="6"
-              className={`form-control ${errors.description ? 'border-red-500' : ''}`}
+              rows={6}
               value={formData.description}
               onChange={handleChange}
-            ></textarea>
-            <div className="flex justify-between mt-1">
-              <p className={`text-sm ${formData.description.length < 50 ? 'text-red-500' : 'text-gray-500'}`}>
-                Minimum 50 characters
-              </p>
-              <p className="text-sm text-gray-500">
-                {formData.description.length}/1000
-              </p>
-            </div>
-            {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
+              error={errors.description}
+              minLength={50}
+              maxLength={1000}
+            />
           </div>
-        </div>
+        </FormSection>
         
-        <div className="bg-brand-white border border-brand-gray-200 rounded-lg p-6 mb-6">
-          <h3 className="text-lg font-bold mb-4">Contact Information</h3>
-          
+        <FormSection title="Contact Information">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="phone" className="form-label">Phone Number</label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                className={`form-control ${errors.phone ? 'border-red-500' : ''}`}
-                value={formData.phone}
-                onChange={handleChange}
-              />
-              {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
-            </div>
+            <FormField
+              label="Phone Number"
+              id="phone"
+              name="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={handleChange}
+              error={errors.phone}
+            />
             
-            <div>
-              <label htmlFor="email" className="form-label">Email Address</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                className={`form-control ${errors.email ? 'border-red-500' : ''}`}
-                value={formData.email}
-                onChange={handleChange}
-              />
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-            </div>
+            <FormField
+              label="Email Address"
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              error={errors.email}
+            />
           </div>
           
           <div className="mt-6">
-            <label htmlFor="website" className="form-label">Website (Optional)</label>
-            <input
-              type="url"
+            <FormField
+              label="Website (Optional)"
               id="website"
               name="website"
-              className={`form-control ${errors.website ? 'border-red-500' : ''}`}
+              type="url"
               value={formData.website}
               onChange={handleChange}
+              error={errors.website}
             />
-            {errors.website && <p className="text-red-500 text-sm mt-1">{errors.website}</p>}
           </div>
           
           <div className="mt-6">
-            <label htmlFor="address" className="form-label">Business Address</label>
-            <textarea
+            <FormTextarea
+              label="Business Address"
               id="address"
               name="address"
-              rows="3"
-              className={`form-control ${errors.address ? 'border-red-500' : ''}`}
+              rows={3}
               value={formData.address}
               onChange={handleChange}
-            ></textarea>
-            {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
+              error={errors.address}
+            />
           </div>
-        </div>
+        </FormSection>
         
         <div className="flex justify-end">
           <button
@@ -301,7 +338,7 @@ function BusinessProfile({ businessData, updateBusinessData }) {
           >
             {isLoading ? (
               <>
-                <svg className="animate-spin h-5 w-5 mr-3 text-brand-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin h-5 w-5 mr-3 text-brand-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -312,7 +349,7 @@ function BusinessProfile({ businessData, updateBusinessData }) {
         </div>
       </form>
     </div>
-  )
+  );
 }
 
-export default BusinessProfile
+export default BusinessProfile;
