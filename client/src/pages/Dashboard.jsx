@@ -7,6 +7,7 @@ import AdvertsManagement from '../components/dashboard/AdvertsManagement'
 import PaymentHistory from '../components/dashboard/PaymentHistory'
 import UpgradePlan from '../components/dashboard/UpgradePlan'
 import SessionManagement from './SessionManagement'
+import BusinessHours from '../components/dashboard/BusinessHours'
 
 function Dashboard() {
   const [businessData, setBusinessData] = useState(null)
@@ -209,6 +210,20 @@ function Dashboard() {
                 </li>
                 <li>
                   <Link 
+                    to="/dashboard/hours" 
+                    className={`block px-4 py-2 rounded-md ${isActive('/dashboard/hours') ? 'bg-brand-black text-brand-white' : 'hover:bg-brand-gray-100'}`}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <div className="flex items-center">
+                      <svg className="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Business Hours
+                    </div>
+                  </Link>
+                </li>
+                <li>
+                  <Link 
                     to="/dashboard/products" 
                     className={`block px-4 py-2 rounded-md ${isActive('/dashboard/products') ? 'bg-brand-black text-brand-white' : 'hover:bg-brand-gray-100'}`}
                     onClick={() => setSidebarOpen(false)}
@@ -308,6 +323,7 @@ function Dashboard() {
               <Routes>
                 <Route path="/" element={<DashboardHome businessData={businessData} />} />
                 <Route path="/profile" element={<BusinessProfile businessData={businessData} updateBusinessData={updateBusinessData} />} />
+                <Route path="/hours" element={<BusinessHours businessData={businessData} />} />
                 <Route path="/products" element={<ManageProducts businessData={businessData} />} />
                 <Route path="/adverts" element={<AdvertsManagement businessData={businessData} />} />
                 <Route path="/payments" element={<PaymentHistory businessData={businessData} />} />

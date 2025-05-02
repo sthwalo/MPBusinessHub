@@ -9,8 +9,7 @@ function BusinessProfile({ businessData, updateBusinessData }) {
     phone: businessData.phone || '',
     email: businessData.email || '',
     website: businessData.website || '',
-    address: businessData.address || '',
-    operatingHours: businessData.operatingHours || {}
+    address: businessData.address || ''
   })
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
@@ -34,16 +33,6 @@ function BusinessProfile({ businessData, updateBusinessData }) {
     if (successMessage) {
       setSuccessMessage('')
     }
-  }
-
-  const handleHoursChange = (day, value) => {
-    setFormData(prevData => ({
-      ...prevData,
-      operatingHours: {
-        ...prevData.operatingHours,
-        [day]: value
-      }
-    }))
   }
 
   const validateForm = () => {
@@ -301,27 +290,6 @@ function BusinessProfile({ businessData, updateBusinessData }) {
               onChange={handleChange}
             ></textarea>
             {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
-          </div>
-        </div>
-        
-        <div className="bg-brand-white border border-brand-gray-200 rounded-lg p-6 mb-6">
-          <h3 className="text-lg font-bold mb-4">Operating Hours</h3>
-          
-          <div className="space-y-4">
-            {Object.entries(formData.operatingHours).map(([day, hours]) => (
-              <div key={day} className="flex items-center">
-                <div className="w-32">
-                  <span className="capitalize">{day}</span>
-                </div>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={hours}
-                  onChange={(e) => handleHoursChange(day, e.target.value)}
-                  placeholder="9:00 - 17:00"
-                />
-              </div>
-            ))}
           </div>
         </div>
         
