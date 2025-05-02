@@ -38,7 +38,7 @@ The project follows a client-server architecture with separate directories for t
 ```
 MPBusinessHub/
 ├── client/               # React frontend
-├── server-new/           # Laravel backend (active)
+├── server/           # Laravel backend (active)
 ├── server/               # Original server files (reference only)
 └── PROGRESS_REPORT.md    # Detailed progress report
 ```
@@ -71,7 +71,7 @@ MPBusinessHub/
 
 1. Navigate to the server directory:
    ```bash
-   cd server-new
+   cd server
    ```
 
 2. Install PHP dependencies:
@@ -146,7 +146,7 @@ MPBusinessHub/
 
 ### Backend Tests
 ```bash
-cd server-new
+cd server
 php artisan test
 ```
 

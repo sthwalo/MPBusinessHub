@@ -121,7 +121,7 @@ client/
 
 ### Server (Laravel Backend)
 ```
-server-new/
+server/
 ├── app/
 │   ├── Http/
 │   │   ├── Controllers/  # API controllers
