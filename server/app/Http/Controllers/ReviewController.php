@@ -58,6 +58,9 @@ class ReviewController extends Controller
                 'comment' => $request->comment,
                 'is_approved' => true // Auto-approve for now
             ]);
+            // Update the business review count
+            $business = Business::find($request->business_id);
+            $business->increment('review_count');
             
             // Load the user relationship for the response
             $review->load('user');

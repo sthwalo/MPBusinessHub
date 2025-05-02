@@ -38,6 +38,7 @@ const BusinessHeader = ({ business }) => {
           <RatingStars value={Number(business.rating) || 0} />
           <span className="ml-2 text-gray-600">
             {business.rating ? business.rating.toFixed(1) : 'No ratings'}
+            <span className="ml-1">({business.review_count || business.reviews?.length || 0} {(business.review_count === 1 || business.reviews?.length === 1) ? 'review' : 'reviews'})</span>
           </span>
         </div>
       )}

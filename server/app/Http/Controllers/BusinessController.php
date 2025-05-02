@@ -405,8 +405,9 @@ class BusinessController extends Controller
                 'category' => $business->category,
                 'district' => $business->district,
                 'description' => $business->description,
-                'package_type' => 'Basic', // Default to Basic tier for now
+                'package_type' => $business->package_type ?? 'Basic', // Default to Basic tier if not set
                 'rating' => $averageRating, // Use calculated average or null
+                'review_count' => $business->review_count ?? $business->reviews->count(), // Add review count
                 'contact' => [
                     'phone' => $business->phone,
                     'email' => $business->user->email,

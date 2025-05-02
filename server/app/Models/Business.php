@@ -26,6 +26,7 @@ class Business extends Model
         'website',
         'user_id',
         'status', // pending, approved, rejected
+        'review_count',
     ];
 
     /**
