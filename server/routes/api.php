@@ -114,3 +114,8 @@ Route::get('/businesses/{id}/products', function ($id) {
 // Package routes
 Route::get('/packages', [App\Http\Controllers\PackageController::class, 'index']);
 Route::middleware('auth:sanctum')->post('/packages/upgrade', [App\Http\Controllers\PackageController::class, 'upgrade']);
+
+// Business statistics tracking
+Route::post('/businesses/{id}/view', [BusinessController::class, 'incrementViewCount']);
+Route::post('/businesses/{id}/contact', [BusinessController::class, 'incrementContactCount']);
+

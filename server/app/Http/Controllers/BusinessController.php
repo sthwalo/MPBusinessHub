@@ -450,6 +450,55 @@ class BusinessController extends Controller
         }
     }
     /**
+     * Increment the view count for a business
+     * 
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function incrementViewCount($id): JsonResponse
+    {
+        try {
+            $business = Business::findOrFail($id);
+            $business->increment('view_count');
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => 'View count incremented successfully',
+                'view_count' => $business->view_count
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to increment view count: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Increment the contact count for a business
+     * 
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function incrementContactCount($id): JsonResponse
+    {
+        try {
+            $business = Business::findOrFail($id);
+            $business->increment('contact_count');
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Contact count incremented successfully',
+                'contact_count' => $business->contact_count
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to increment contact count: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    /**
      * Remove all businesses from the database (admin use only)
      * 
      * @param Request $request

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import axios from 'axios'
 import { useParams, Link } from 'react-router-dom'
 import useBusiness from '../hooks/useBusiness';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
@@ -24,7 +25,32 @@ function BusinessDetails() {
     handleRatingChange,
     handleReviewSubmit
   } = useBusiness(id);
-  
+
+  useEffect(() => {
+    // Track view when component mounts
+    const trackView = async () => {
+      if (business && business.id) {
+        try {
+          await axios.post(`/api/businesses/${business.id}/view`);
+        } catch (error) {
+          console.error('Error tracking view:', error);
+        }
+      }
+    };
+    
+    trackView();
+  }, [business]);
+
+  const handleContactClick = async () => {
+    if (business && business.id) {
+      try {
+        await axios.post(`/api/businesses/${business.id}/contact`);
+      } catch (error) {
+        console.error('Error tracking contact click:', error);
+      }
+    }
+  };
+
   if (loading) return <LoadingSkeleton />;
   if (error) return <ErrorMessage message={error} />;
   if (!business) return <ErrorMessage message="Business not found" />;
@@ -88,7 +114,6 @@ function BusinessDetails() {
               </div>
             </div>
           )}
-          
           {business.location && (
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h2 className="text-xl font-bold mb-4">Location</h2>
