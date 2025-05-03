@@ -21,7 +21,7 @@ This roadmap outlines the step-by-step tasks required to complete the MPBusiness
 - [x] Implement image upload for business profiles
 - [x] Add business category management
 - [x] Develop district/location management
-- [ ] Create business status workflow (pending → approved)
+- [x] Create business status workflow (pending → approved)
 
 ## Phase 2: Frontend Development (Weeks 3-5)
 

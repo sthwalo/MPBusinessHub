@@ -137,3 +137,23 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 // User Role Routes
 Route::middleware('auth:sanctum')->get('/user/role', [App\Http\Controllers\AuthController::class, 'getUserRole']);
+
+// Add these routes to /server/routes/api.php
+
+// Admin routes
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    // Business management
+    Route::get('/businesses', [App\Http\Controllers\Admin\BusinessController::class, 'index']);
+    
+    // User management
+    Route::get('/users', [App\Http\Controllers\Admin\UserController::class, 'index']);
+    Route::put('/users/{id}/role', [App\Http\Controllers\Admin\UserController::class, 'updateRole']);
+    
+    // Content moderation
+    Route::get('/reviews/pending', [App\Http\Controllers\Admin\ReviewController::class, 'getPendingReviews']);
+    Route::put('/reviews/{id}/approve', [App\Http\Controllers\Admin\ReviewController::class, 'approveReview']);
+    Route::put('/reviews/{id}/reject', [App\Http\Controllers\Admin\ReviewController::class, 'rejectReview']);
+    
+    // System statistics
+    Route::get('/statistics', [App\Http\Controllers\Admin\StatisticsController::class, 'getStatistics']);
+});
