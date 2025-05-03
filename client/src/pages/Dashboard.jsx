@@ -82,15 +82,16 @@ function Dashboard() {
             website: result.data.website,
             package_type: result.data.package_type || 'Basic',
             adverts_remaining: result.data.adverts_remaining || 0,
+            rating: result.data.rating || 0,
             subscription: {
               status: 'active',
               next_billing_date: '2025-05-01',
               amount: 0
             },
             statistics: {
-              views: 0,
-              contacts: 0,
-              reviews: 0
+              views: result.data.statistics?.views || 0,
+              contacts: result.data.statistics?.contacts || 0,
+              reviews: result.data.review_count || 0
             }
           };
           

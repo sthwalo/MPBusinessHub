@@ -101,6 +101,11 @@ class BusinessController extends Controller
             }
         }
         
+        // Calculate average rating if reviews exist
+        $averageRating = $business->reviews->count() > 0 
+            ? $business->reviews->avg('rating') 
+            : 0;
+            
         // Transform business data to match client's expected format
         $businessData = [
             'id' => $business->id,
@@ -112,17 +117,19 @@ class BusinessController extends Controller
             'phone' => $business->phone,
             'email' => $user->email,
             'website' => $business->website,
-            'package_type' => 'Basic', // Default to Basic tier for now
+            'package_type' => $business->package_type ?? 'Basic',
             'adverts_remaining' => 0,
+            'rating' => $averageRating,
+            'review_count' => $business->reviews->count(),
             'subscription' => [
                 'status' => 'active',
                 'next_billing_date' => date('Y-m-d', strtotime('+30 days')),
                 'amount' => 0
             ],
             'statistics' => [
-                'views' => 0,
-                'contacts' => 0,
-                'reviews' => 0
+                'views' => $business->view_count ?? 0,
+                'contacts' => $business->contact_count ?? 0,
+                'reviews' => $business->reviews->count()
             ],
             'operatingHours' => $operatingHours
         ];
