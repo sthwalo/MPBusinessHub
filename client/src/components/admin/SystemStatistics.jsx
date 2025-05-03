@@ -1,4 +1,3 @@
-// /client/src/components/admin/SystemStatistics.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 

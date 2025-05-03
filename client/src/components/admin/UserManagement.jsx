@@ -1,4 +1,3 @@
-// /client/src/components/admin/UserManagement.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
