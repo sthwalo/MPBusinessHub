@@ -135,7 +135,7 @@ function UpgradePlan({ businessData }) {
       businessData.package_type = selectedPlan
       if (selectedPlan === 'Silver') {
         businessData.subscription.amount = billingCycle === 'monthly' ? 500 : 5000 / 12
-        businessData.adverts_remaining = 1
+        businessData.adverts_remaining = 2
       } else if (selectedPlan === 'Gold') {
         businessData.subscription.amount = billingCycle === 'monthly' ? 1000 : 10000 / 12
         businessData.adverts_remaining = 4

@@ -82,3 +82,10 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reviews', [App\Http\Controllers\ReviewController::class, 'store']);
 });
+
+// Advert routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/adverts', [App\Http\Controllers\AdvertController::class, 'store']);
+    Route::get('/adverts', [App\Http\Controllers\AdvertController::class, 'index']);
+    Route::delete('/adverts/{id}', [App\Http\Controllers\AdvertController::class, 'destroy']);
+});

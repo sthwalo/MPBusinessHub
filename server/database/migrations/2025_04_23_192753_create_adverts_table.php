@@ -13,6 +13,14 @@ return new class extends Migration
     {
         Schema::create('adverts', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('business_id')->constrained()->onDelete('cascade');
+            $table->string('title');
+            $table->text('description');
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->enum('status', ['draft', 'scheduled', 'active', 'completed', 'cancelled'])->default('draft');
+            $table->integer('views')->default(0);
+            $table->integer('clicks')->default(0);
             $table->timestamps();
         });
     }

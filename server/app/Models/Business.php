@@ -27,6 +27,8 @@ class Business extends Model
         'user_id',
         'status', // pending, approved, rejected
         'review_count',
+        'package_type',
+        'adverts_remaining',
     ];
 
     /**
@@ -51,5 +53,13 @@ class Business extends Model
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
+    }
+    
+    /**
+     * Get the adverts for the business.
+     */
+    public function adverts(): HasMany
+    {
+        return $this->hasMany(Advert::class);
     }
 }

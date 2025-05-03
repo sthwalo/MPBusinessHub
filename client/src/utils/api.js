@@ -95,6 +95,39 @@ export const fetchPackageTiers = async () => {
   }
 };
 
+// Adverts API functions
+export const advertsApi = {
+  // Get all adverts for the authenticated user's business
+  getAll: async () => {
+    try {
+      return await api.get('/adverts');
+    } catch (error) {
+      console.error('Error fetching adverts:', error);
+      throw error;
+    }
+  },
+  
+  // Create a new advert
+  create: async (advertData) => {
+    try {
+      return await api.post('/adverts', advertData);
+    } catch (error) {
+      console.error('Error creating advert:', error);
+      throw error;
+    }
+  },
+  
+  // Delete an advert
+  delete: async (advertId) => {
+    try {
+      return await api.delete(`/adverts/${advertId}`);
+    } catch (error) {
+      console.error('Error deleting advert:', error);
+      throw error;
+    }
+  }
+};
+
 // Debugging in development
 if (process.env.NODE_ENV === 'development') {
   api.interceptors.request.use(request => {
