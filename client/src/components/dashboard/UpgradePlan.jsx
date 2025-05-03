@@ -1,74 +1,106 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 function UpgradePlan({ businessData }) {
   const [selectedPlan, setSelectedPlan] = useState(businessData.package_type)
   const [billingCycle, setBillingCycle] = useState('monthly')
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+  const [error, setError] = useState('')
+  const [packages, setPackages] = useState([])
 
-  // Define package tiers and their features
-  const packages = [
+  // Fetch packages from API when component mounts
+  useEffect(() => {
+    const fetchPackages = async () => {
+      try {
+        const response = await fetch('/api/packages')
+        const data = await response.json()
+        
+        if (data.status === 'success') {
+          setPackages(data.data)
+        }
+      } catch (error) {
+        console.error('Error fetching packages:', error)
+        setError('Failed to load packages. Please try again later.')
+      }
+    }
+    
+    fetchPackages()
+  }, [])
+
+  // If we don't have packages yet, use these as fallback
+  const fallbackPackages = [
     {
-      id: 'Basic',
+      id: 1,
       name: 'Basic',
-      monthlyPrice: 0,
-      annualPrice: 0,
-      features: [
-        { name: 'Listing Visibility', included: true },
-        { name: 'Contact Links', included: false },
-        { name: 'E-Commerce', included: false },
-        { name: 'Monthly Adverts', included: false, details: '0' }
-      ]
+      price_monthly: 0,
+      price_annual: 0,
+      advert_limit: 0,
+      product_limit: 0,
+      features: ['Basic listing', 'Business hours']
     },
     {
-      id: 'Bronze',
+      id: 2,
       name: 'Bronze',
-      monthlyPrice: 200,
-      annualPrice: 2000,
-      features: [
-        { name: 'Listing Visibility', included: true },
-        { name: 'Contact Links', included: true },
-        { name: 'E-Commerce', included: false },
-        { name: 'Monthly Adverts', included: false, details: '0' }
-      ]
+      price_monthly: 200,
+      price_annual: 2000,
+      advert_limit: 0,
+      product_limit: 0,
+      features: ['Basic listing', 'Business hours', 'Contact information']
     },
     {
-      id: 'Silver',
+      id: 3,
       name: 'Silver',
-      monthlyPrice: 500,
-      annualPrice: 5000,
-      popular: true,
-      features: [
-        { name: 'Listing Visibility', included: true },
-        { name: 'Contact Links', included: true },
-        { name: 'E-Commerce', included: true },
-        { name: 'Monthly Adverts', included: true, details: '1' }
-      ]
+      price_monthly: 500,
+      price_annual: 5000,
+      advert_limit: 2,
+      product_limit: 10,
+      features: ['Basic listing', 'Business hours', 'Contact information', 'Products showcase', '2 monthly adverts']
     },
     {
-      id: 'Gold',
+      id: 4,
       name: 'Gold',
-      monthlyPrice: 1000,
-      annualPrice: 10000,
-      features: [
-        { name: 'Listing Visibility', included: true },
-        { name: 'Contact Links', included: true },
-        { name: 'E-Commerce', included: true },
-        { name: 'Monthly Adverts', included: true, details: '4' }
-      ]
+      price_monthly: 1000,
+      price_annual: 10000,
+      advert_limit: 4,
+      product_limit: 50,
+      features: ['Basic listing', 'Business hours', 'Contact information', 'Products showcase', '4 monthly adverts', 'Featured listing']
     }
   ]
 
+  // Use API packages or fallback if API hasn't loaded yet
+  const displayPackages = packages.length > 0 ? packages : fallbackPackages
+
+  // Format packages for display
+  const formattedPackages = displayPackages.map(pkg => ({
+    id: pkg.id,
+    name: pkg.name,
+    monthlyPrice: pkg.price_monthly,
+    annualPrice: pkg.price_annual,
+    popular: pkg.name === 'Silver',
+    features: [
+      { name: 'Listing Visibility', included: true },
+      { name: 'Contact Links', included: ['Bronze', 'Silver', 'Gold'].includes(pkg.name) },
+      { name: 'E-Commerce', included: ['Silver', 'Gold'].includes(pkg.name) },
+      { name: 'Monthly Adverts', included: pkg.advert_limit > 0, details: pkg.advert_limit.toString() }
+    ]
+  }))
+
   const handlePlanChange = (planId) => {
-    setSelectedPlan(planId)
-    // Reset success message if any
-    setSuccessMessage('')
+    // Find the package with this ID
+    const selectedPackage = displayPackages.find(p => p.id === planId)
+    if (selectedPackage) {
+      setSelectedPlan(selectedPackage.name)
+      // Reset success message if any
+      setSuccessMessage('')
+      setError('')
+    }
   }
 
   const handleBillingCycleChange = (cycle) => {
     setBillingCycle(cycle)
     // Reset success message if any
     setSuccessMessage('')
+    setError('')
   }
 
   const getDiscountPercentage = () => {
@@ -76,11 +108,11 @@ function UpgradePlan({ businessData }) {
   }
 
   const getCurrentPlanIndex = () => {
-    return packages.findIndex(pkg => pkg.id === businessData.package_type)
+    return formattedPackages.findIndex(pkg => pkg.name === businessData.package_type)
   }
 
   const getSelectedPlanIndex = () => {
-    return packages.findIndex(pkg => pkg.id === selectedPlan)
+    return formattedPackages.findIndex(pkg => pkg.name === selectedPlan)
   }
 
   const isDowngrade = () => {
@@ -95,61 +127,61 @@ function UpgradePlan({ businessData }) {
     return selectedPlan === businessData.package_type
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault()
     if (isCurrentPlan()) return
     
     setIsLoading(true)
+    setError('')
+    setSuccessMessage('')
     
-    // In production, this would redirect to PayFast or handle the payment process
-    // const initiatePayment = async () => {
-    //   try {
-    //     const response = await fetch('/api/payments/upgrade', {
-    //       method: 'POST',
-    //       headers: {
-    //         'Content-Type': 'application/json',
-    //         'Authorization': `Bearer ${localStorage.getItem('token')}`
-    //       },
-    //       body: JSON.stringify({
-    //         package: selectedPlan,
-    //         billingCycle
-    //       })
-    //     })
-    //     
-    //     if (!response.ok) throw new Error('Failed to initiate payment')
-    //     
-    //     const data = await response.json()
-    //     
-    //     // Redirect to PayFast checkout
-    //     window.location.href = data.paymentUrl
-    //   } catch (error) {
-    //     console.error('Error initiating payment:', error)
-    //     setIsLoading(false)
-    //   }
-    // }
-    // 
-    // initiatePayment()
-    
-    // For demo purposes, we'll just simulate a successful upgrade
-    setTimeout(() => {
-      // Update the business data for this demo
-      businessData.package_type = selectedPlan
-      if (selectedPlan === 'Silver') {
-        businessData.subscription.amount = billingCycle === 'monthly' ? 500 : 5000 / 12
-        businessData.adverts_remaining = 2
-      } else if (selectedPlan === 'Gold') {
-        businessData.subscription.amount = billingCycle === 'monthly' ? 1000 : 10000 / 12
-        businessData.adverts_remaining = 4
-      } else if (selectedPlan === 'Bronze') {
-        businessData.subscription.amount = billingCycle === 'monthly' ? 200 : 2000 / 12
-        businessData.adverts_remaining = 0
-      } else {
-        businessData.subscription.amount = 0
-        businessData.adverts_remaining = 0
+    try {
+      // Get the package ID based on the selected plan name
+      const selectedPackage = displayPackages.find(p => p.name === selectedPlan)
+      
+      if (!selectedPackage) {
+        throw new Error('Selected package not found')
       }
       
+      // Call the API to upgrade the package
+      const response = await fetch('/api/packages/upgrade', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('mpbh_token')}`
+        },
+        body: JSON.stringify({
+          package_id: selectedPackage.id,
+          billing_cycle: billingCycle
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to upgrade package')
+      }
+      
+      // Update the business data with the response from the server
+      businessData.package_id = data.data.business.package_id
+      businessData.package_type = selectedPackage.name
+      businessData.adverts_remaining = data.data.business.adverts_remaining
+      businessData.billing_cycle = data.data.business.billing_cycle
+      businessData.subscription_ends_at = data.data.business.subscription_ends_at
+      
+      // Update subscription amount based on billing cycle
+      businessData.subscription = businessData.subscription || {}
+      businessData.subscription.amount = billingCycle === 'monthly' 
+        ? selectedPackage.price_monthly 
+        : selectedPackage.price_annual / 12
+      
       setSuccessMessage(`Successfully ${isUpgrade() ? 'upgraded' : 'changed'} to ${selectedPlan} plan!`)
+    } catch (error) {
+      console.error('Error upgrading package:', error)
+      setError(error.message || 'An error occurred while upgrading your package')
+    } finally {
       setIsLoading(false)
-    }, 1500)
+    }
   }
 
   return (
@@ -162,6 +194,12 @@ function UpgradePlan({ businessData }) {
       {successMessage && (
         <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg p-4 mb-6">
           {successMessage}
+        </div>
+      )}
+      
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 mb-6">
+          {error}
         </div>
       )}
       
@@ -190,9 +228,9 @@ function UpgradePlan({ businessData }) {
       
       {/* Package Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {packages.map((pkg) => {
-          const isCurrent = pkg.id === businessData.package_type
-          const isSelected = pkg.id === selectedPlan
+        {formattedPackages.map((pkg) => {
+          const isCurrent = pkg.name === businessData.package_type
+          const isSelected = pkg.name === selectedPlan
           
           return (
             <div 
@@ -292,7 +330,7 @@ function UpgradePlan({ businessData }) {
           >
             {isLoading ? (
               <>
-                <svg className="animate-spin h-5 w-5 mr-3 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin h-5 w-5 mr-3 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>

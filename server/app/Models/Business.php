@@ -70,4 +70,11 @@ class Business extends Model
     {
         return $this->hasMany(Product::class);
     }
+    /**
+     * Get the package that the business is subscribed to.
+     */
+    public function package(): BelongsTo
+    {
+        return $this->belongsTo(Package::class);
+    }
 }

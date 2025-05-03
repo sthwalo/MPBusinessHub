@@ -91,7 +91,6 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // Product routes
-// Product routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/products', [App\Http\Controllers\ProductController::class, 'index']);
     Route::post('/products', [App\Http\Controllers\ProductController::class, 'store']);
@@ -111,3 +110,7 @@ Route::get('/businesses/{id}/products', function ($id) {
         'data' => $products
     ]);
 });
+
+// Package routes
+Route::get('/packages', [App\Http\Controllers\PackageController::class, 'index']);
+Route::middleware('auth:sanctum')->post('/packages/upgrade', [App\Http\Controllers\PackageController::class, 'upgrade']);
