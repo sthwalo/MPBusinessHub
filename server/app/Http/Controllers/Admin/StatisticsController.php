@@ -51,16 +51,14 @@ class StatisticsController extends Controller
         $previousBusinesses = Business::whereBetween('created_at', [$previousStart, $previousEnd])->count();
         $businessGrowth = $previousBusinesses > 0 ? round((($newBusinesses - $previousBusinesses) / $previousBusinesses) * 100, 2) : 0;
         
-        // Review statistics
-        $totalReviews = Review::count();
-        $newReviews = Review::where('created_at', '>=', $startDate)->count();
-        $previousReviews = Review::whereBetween('created_at', [$previousStart, $previousEnd])->count();
-        $reviewGrowth = $previousReviews > 0 ? round((($newReviews - $previousReviews) / $previousReviews) * 100, 2) : 0;
-        
         // Revenue statistics
-        $totalRevenue = Payment::sum('amount');
-        $newRevenue = Payment::where('created_at', '>=', $startDate)->sum('amount');
-        $previousRevenue = Payment::whereBetween('created_at', [$previousStart, $previousEnd])->sum('amount');
+        $totalRevenue = Payment::where('status', 'completed')->sum('amount');
+        $newRevenue = Payment::where('status', 'completed')
+            ->where('created_at', '>=', $startDate)
+            ->sum('amount');
+        $previousRevenue = Payment::where('status', 'completed')
+            ->whereBetween('created_at', [$previousStart, $previousEnd])
+            ->sum('amount');
         $revenueGrowth = $previousRevenue > 0 ? round((($newRevenue - $previousRevenue) / $previousRevenue) * 100, 2) : 0;
         
         // Business status counts

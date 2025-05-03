@@ -157,3 +157,12 @@ Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     // System statistics
     Route::get('/statistics', [App\Http\Controllers\Admin\StatisticsController::class, 'getStatistics']);
 });
+// Payment routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/payments/initiate', [App\Http\Controllers\PayFastController::class, 'initiate']);
+});
+
+// PayFast callback routes (no auth required)
+Route::post('/payfast/notify', [App\Http\Controllers\PayFastController::class, 'notify'])->name('payfast.notify');
+Route::get('/payfast/return', [App\Http\Controllers\PayFastController::class, 'return'])->name('payfast.return');
+Route::get('/payfast/cancel', [App\Http\Controllers\PayFastController::class, 'cancel'])->name('payfast.cancel');
