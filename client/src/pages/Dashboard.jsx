@@ -178,6 +178,14 @@ function Dashboard() {
           </div>
           
           <div className="flex items-center space-x-4">
+            {isAdmin && (
+              <a 
+                href="/admin"
+                className="bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-purple-700"
+              >
+                Admin Dashboard
+              </a>
+            )}
             <div className="text-right">
               <p className="font-medium text-gray-800">{businessData.name}</p>
               <div className="text-sm text-gray-500 flex items-center">
