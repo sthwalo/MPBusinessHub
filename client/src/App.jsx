@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import Header from './components/Header'
@@ -20,6 +20,14 @@ import Pricing from './pages/Pricing'
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  useEffect(() => {
+    // Check if user is authenticated on component mount
+    const token = localStorage.getItem('mpbh_token')
+    if (token) {
+      setIsAuthenticated(true)
+    }
+  }, [])
 
   return (
     <div className="app-container">

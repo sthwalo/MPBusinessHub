@@ -141,7 +141,7 @@ Route::middleware('auth:sanctum')->get('/user/role', [App\Http\Controllers\AuthC
 // Add these routes to /server/routes/api.php
 
 // Admin routes
-Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     // Business management
     Route::get('/businesses', [App\Http\Controllers\Admin\BusinessController::class, 'index']);
     
