@@ -35,6 +35,9 @@ class BusinessController extends Controller
             $query->where('district', $request->district);
         }
         
+        // Only show approved businesses in the directory
+        $query->where('status', 'approved');
+        
         // Get businesses
         $businesses = $query->get();
         
@@ -324,6 +327,9 @@ class BusinessController extends Controller
         if ($request->has('district')) {
             $query->where('district', $request->district);
         }
+        
+        // Only show approved businesses in the directory
+        $query->where('status', 'approved');
         
         // Get businesses
         $businesses = $query->get();
