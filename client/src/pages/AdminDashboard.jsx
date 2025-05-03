@@ -1,6 +1,6 @@
 // /client/src/pages/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import BusinessManagement from '../components/admin/BusinessManagement';
 import UserManagement from '../components/admin/UserManagement';
@@ -61,8 +61,8 @@ function AdminDashboard() {
             <nav>
               <ul className="space-y-2">
                 <li>
-                  <a 
-                    href="/admin/businesses" 
+                  <Link 
+                    to="/admin/businesses" 
                     className="block px-4 py-2 rounded-md hover:bg-brand-gray-100 text-brand-gray-700"
                   >
                     <div className="flex items-center">
@@ -71,11 +71,11 @@ function AdminDashboard() {
                       </svg>
                       Business Management
                     </div>
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a 
-                    href="/admin/users" 
+                  <Link 
+                    to="/admin/users" 
                     className="block px-4 py-2 rounded-md hover:bg-brand-gray-100 text-brand-gray-700"
                   >
                     <div className="flex items-center">
@@ -84,11 +84,11 @@ function AdminDashboard() {
                       </svg>
                       User Management
                     </div>
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a 
-                    href="/admin/reviews" 
+                  <Link 
+                    to="/admin/reviews" 
                     className="block px-4 py-2 rounded-md hover:bg-brand-gray-100 text-brand-gray-700"
                   >
                     <div className="flex items-center">
@@ -97,11 +97,11 @@ function AdminDashboard() {
                       </svg>
                       Content Moderation
                     </div>
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a 
-                    href="/admin/statistics" 
+                  <Link 
+                    to="/admin/statistics" 
                     className="block px-4 py-2 rounded-md hover:bg-brand-gray-100 text-brand-gray-700"
                   >
                     <div className="flex items-center">
@@ -110,11 +110,11 @@ function AdminDashboard() {
                       </svg>
                       System Statistics
                     </div>
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a 
-                    href="/dashboard" 
+                  <Link 
+                    to="/dashboard" 
                     className="block px-4 py-2 rounded-md hover:bg-brand-gray-100 text-brand-gray-700"
                   >
                     <div className="flex items-center">
@@ -123,7 +123,7 @@ function AdminDashboard() {
                       </svg>
                       Return to Dashboard
                     </div>
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </nav>
