@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 
 function BusinessCard({ business }) {
   console.log('BusinessCard props:', business) // Debug log
-  const { id, name, category, district, package_type, rating, description, contact, image } = business
+  const { id, name, category, district, package_type, rating, description, contact, image_url } = business
 
   // Define tier badge styles in elegant black and white theme
   const tierBadgeStyles = {
@@ -101,8 +101,8 @@ function BusinessCard({ business }) {
     <div className="rounded-lg overflow-hidden shadow-brand-md hover:shadow-brand-lg transition-all duration-300 border border-brand-gray-200">
       {/* Image */}
       <div className="relative h-48 bg-brand-gray-200">
-        {image ? (
-          <img src={image} alt={name} className="w-full h-full object-cover" />
+        {image_url ? (
+          <img src={image_url} alt={name} className="w-full h-full object-cover" />
         ) : (
           <div className="flex items-center justify-center h-full bg-brand-gray-100">
             <svg className="h-12 w-12 text-brand-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,7 +175,7 @@ BusinessCard.propTypes = {
     rating: PropTypes.number,
     description: PropTypes.string,
     contact: PropTypes.object,
-    image: PropTypes.string
+    image_url: PropTypes.string
   }).isRequired
 }
 

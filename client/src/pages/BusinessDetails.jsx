@@ -63,9 +63,9 @@ function BusinessDetails() {
           
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <div className="relative h-64 bg-gray-200 rounded-lg mb-6">
-              {business.images && business.images.length > 0 ? (
+              {business.image_url ? (
                 <img 
-                  src={business.images[0]} 
+                  src={business.image_url} 
                   alt={business.name} 
                   className="w-full h-full object-cover rounded-lg"
                 />
