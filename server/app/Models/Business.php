@@ -62,4 +62,12 @@ class Business extends Model
     {
         return $this->hasMany(Advert::class);
     }
+    
+    /**
+     * Get the products for the business.
+     */
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class);
+    }
 }

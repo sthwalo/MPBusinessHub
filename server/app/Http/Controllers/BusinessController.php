@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\User;
 use App\Models\OperatingHour;
 use Illuminate\Support\Facades\DB;
+use App\Models\Product;
+use Illuminate\Support\Facades\Log;
 
 class BusinessController extends Controller
 {
@@ -353,7 +355,7 @@ class BusinessController extends Controller
     public function show($id): JsonResponse
     {
         try {
-            // Find the business by ID with relationships
+            // Find the business by ID with basic relationships first
             $business = Business::with(['user', 'operatingHours', 'reviews.user'])->find($id);
             
             if (!$business) {
@@ -361,6 +363,17 @@ class BusinessController extends Controller
                     'status' => 'error',
                     'message' => 'Business not found'
                 ], 404);
+            }
+            
+            // Load products separately with error handling
+            $products = [];
+            try {
+                $products = Product::where('business_id', $business->id)
+                    ->where('status', 'active')
+                    ->get();
+            } catch (\Exception $e) {
+                // Log product loading error but continue
+                Log::error('Error loading products: ' . $e->getMessage());
             }
             
             // Calculate average rating if reviews exist
@@ -416,7 +429,7 @@ class BusinessController extends Controller
                     'whatsapp' => $business->phone // Using phone as WhatsApp for now
                 ],
                 'hours' => $operatingHours,
-                'products' => [],
+                'products' => $products, // Use the separately loaded products
                 'reviews' => $formattedReviews,
                 'images' => []
             ];

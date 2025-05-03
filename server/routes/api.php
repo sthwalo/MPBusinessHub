@@ -89,3 +89,25 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/adverts', [App\Http\Controllers\AdvertController::class, 'index']);
     Route::delete('/adverts/{id}', [App\Http\Controllers\AdvertController::class, 'destroy']);
 });
+
+// Product routes
+// Product routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/products', [App\Http\Controllers\ProductController::class, 'index']);
+    Route::post('/products', [App\Http\Controllers\ProductController::class, 'store']);
+    Route::get('/products/{id}', [App\Http\Controllers\ProductController::class, 'show']);
+    Route::put('/products/{id}', [App\Http\Controllers\ProductController::class, 'update']);
+    Route::delete('/products/{id}', [App\Http\Controllers\ProductController::class, 'destroy']);
+});
+
+// Public product routes
+Route::get('/businesses/{id}/products', function ($id) {
+    $products = App\Models\Product::where('business_id', $id)
+        ->where('status', 'active')
+        ->get();
+        
+    return response()->json([
+        'status' => 'success',
+        'data' => $products
+    ]);
+});

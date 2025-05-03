@@ -128,6 +128,69 @@ export const advertsApi = {
   }
 };
 
+// Products API functions
+export const productsApi = {
+  // Get all products for the authenticated user's business
+  getAll: async () => {
+    try {
+      return await api.get('/products');
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      throw error;
+    }
+  },
+  
+  // Get products for a specific business
+  getForBusiness: async (businessId) => {
+    try {
+      return await api.get(`/businesses/${businessId}/products`);
+    } catch (error) {
+      console.error('Error fetching business products:', error);
+      throw error;
+    }
+  },
+  
+  // Create a new product
+  create: async (productData) => {
+    try {
+      return await api.post('/products', productData);
+    } catch (error) {
+      console.error('Error creating product:', error);
+      throw error;
+    }
+  },
+  
+  // Get a specific product
+  get: async (productId) => {
+    try {
+      return await api.get(`/products/${productId}`);
+    } catch (error) {
+      console.error('Error fetching product:', error);
+      throw error;
+    }
+  },
+  
+  // Update a product
+  update: async (productId, productData) => {
+    try {
+      return await api.put(`/products/${productId}`, productData);
+    } catch (error) {
+      console.error('Error updating product:', error);
+      throw error;
+    }
+  },
+  
+  // Delete a product
+  delete: async (productId) => {
+    try {
+      return await api.delete(`/products/${productId}`);
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      throw error;
+    }
+  }
+};
+
 // Debugging in development
 if (process.env.NODE_ENV === 'development') {
   api.interceptors.request.use(request => {
