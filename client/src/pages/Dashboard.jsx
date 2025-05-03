@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
 import DashboardHome from '../components/dashboard/DashboardHome'
 import BusinessProfile from '../components/dashboard/BusinessProfile'
-import ManageProducts from '../components/dashboard/ManageProducts'
+import ProductsManagement from '../components/dashboard/ProductsManagement'
 import AdvertsManagement from '../components/dashboard/AdvertsManagement'
 import PaymentHistory from '../components/dashboard/PaymentHistory'
 import UpgradePlan from '../components/dashboard/UpgradePlan'
@@ -324,7 +324,7 @@ function Dashboard() {
                 <Route path="/" element={<DashboardHome businessData={businessData} />} />
                 <Route path="/profile" element={<BusinessProfile businessData={businessData} updateBusinessData={updateBusinessData} />} />
                 <Route path="/hours" element={<BusinessHours businessData={businessData} />} />
-                <Route path="/products" element={<ManageProducts businessData={businessData} />} />
+                <Route path="/products" element={<ProductsManagement businessData={businessData} />} />
                 <Route path="/adverts" element={<AdvertsManagement businessData={businessData} />} />
                 <Route path="/payments" element={<PaymentHistory businessData={businessData} />} />
                 <Route path="/upgrade" element={<UpgradePlan businessData={businessData} />} />

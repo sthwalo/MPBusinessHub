@@ -25,7 +25,7 @@ const ProductsGrid = ({ business }) => {
               <h4 className="font-bold">{product?.name || 'Unnamed Product'}</h4>
               <p className="text-gray-600">{product?.description || 'No description'}</p>
               {product?.price && (
-                <p className="font-bold mt-2">R{product.price.toFixed(2)}</p>
+                <p className="font-bold mt-2">R{parseFloat(product.price).toFixed(2)}</p>
               )}
             </div>
           ))}
