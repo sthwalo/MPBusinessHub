@@ -166,4 +166,12 @@ class AuthController extends Controller
         $user->locked_until = null;
         $user->save();
     }
+    
+    public function getUserRole()
+    {
+        $user = Auth::user();
+        return response()->json([
+            'role' => $user->role
+        ]);
+    }
 }

@@ -124,3 +124,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/images/business', [App\Http\Controllers\ImageController::class, 'uploadBusinessImage']);
     Route::post('/images/product', [App\Http\Controllers\ImageController::class, 'uploadProductImage']);
 });
+// Business Status Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/business-statuses', [App\Http\Controllers\BusinessStatusController::class, 'getStatuses']);
+    Route::put('/businesses/{id}/status', [App\Http\Controllers\BusinessStatusController::class, 'updateStatus']);
+    Route::put('/businesses/{id}/approve', [App\Http\Controllers\BusinessStatusController::class, 'approveBusiness']);
+    Route::put('/businesses/{id}/reject', [App\Http\Controllers\BusinessStatusController::class, 'rejectBusiness']);
+});
+// User Role Routes
+Route::middleware('auth:sanctum')->get('/user/role', [App\Http\Controllers\AuthController::class, 'getUserRole']);

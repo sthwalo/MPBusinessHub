@@ -6,6 +6,7 @@ import Footer from './components/Footer'
 import Home from './pages/Home'
 import BusinessDirectory from './pages/BusinessDirectory'
 import BusinessDetails from './pages/BusinessDetails'
+import AdminDashboard from './pages/AdminDashboard'
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -32,6 +33,11 @@ function App() {
             path="/dashboard/*" 
             element={
               isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />
+            } 
+          />
+          <Route path="/admin/*" 
+            element={
+              isAuthenticated ? <AdminDashboard /> : <Navigate to="/login" replace />
             } 
           />
           <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />

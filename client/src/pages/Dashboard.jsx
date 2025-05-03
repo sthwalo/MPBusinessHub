@@ -15,6 +15,7 @@ function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
+  const [isAdmin, setIsAdmin] = useState(false);
   
   // Check which dashboard tab is active
   const isActive = (path) => {
@@ -44,6 +45,23 @@ function Dashboard() {
           return;
         }
         
+        const checkAdminStatus = async () => {
+          try {
+            const response = await axios.get('/api/user/role', {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('mpbh_token')}`
+              }
+            });
+            
+            if (response.data.role === 'admin') {
+              setIsAdmin(true);
+            }
+          } catch (error) {
+            console.error('Error checking admin status:', error);
+          }
+        };
+        
+        checkAdminStatus();
         // Fetch business details from our Laravel backend
         const response = await fetch('/api/business/details', {
           method: 'GET',
@@ -196,6 +214,20 @@ function Dashboard() {
                   </Link>
                 </li>
                 <li>
+                  {isAdmin && (
+                    <Link 
+                      to="/admin" 
+                      className={`block px-4 py-2 rounded-md ${isActive('/admin') ? 'bg-brand-black text-brand-white' : 'hover:bg-brand-gray-100'}`}
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <div className="flex items-center">
+                        <svg className="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                        </svg>
+                        Admin Panel
+                      </div>
+                    </Link>
+                  )}
                   <Link 
                     to="/dashboard/profile" 
                     className={`block px-4 py-2 rounded-md ${isActive('/dashboard/profile') ? 'bg-brand-black text-brand-white' : 'hover:bg-brand-gray-100'}`}
