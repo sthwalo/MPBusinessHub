@@ -363,7 +363,7 @@ class BusinessController extends Controller
     {
         try {
             // Find the business by ID with basic relationships first
-            $business = Business::with(['user', 'operatingHours', 'reviews.user'])->find($id);
+            $business = Business::with(['user', 'operatingHours', 'reviews'])->find($id);
             
             if (!$business) {
                 return response()->json([
@@ -390,16 +390,15 @@ class BusinessController extends Controller
             
             // Format reviews if they exist
             $formattedReviews = $business->reviews->map(function ($review) {
-                return [
+                $reviewData = [
                     'id' => $review->id,
                     'rating' => $review->rating,
                     'comment' => $review->comment,
+                    'reviewer_name' => $review->reviewer_name,
                     'created_at' => $review->created_at->format('Y-m-d H:i:s'),
-                    'user' => [
-                        'id' => $review->user->id,
-                        'name' => $review->user->name,
-                    ]
                 ];
+                
+                return $reviewData;
             })->values()->all();
             
             // Format operating hours

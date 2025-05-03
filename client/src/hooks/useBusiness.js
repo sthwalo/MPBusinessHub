@@ -58,7 +58,7 @@ export default function useBusiness(id) {
     setUserRating(rating);
   }, []);
 
-  // Handle review submission
+  // Handle review submission for authenticated users
   const handleReviewSubmit = useCallback(async (e) => {
     e.preventDefault();
     
@@ -86,7 +86,9 @@ export default function useBusiness(id) {
         body: JSON.stringify({
           business_id: business.id,
           rating: userRating,
-          comment: reviewText
+          comment: reviewText,
+          reviewer_name: 'Anonymous User',
+          reviewer_email: ''
         })
       });
       
@@ -119,6 +121,54 @@ export default function useBusiness(id) {
       setIsSubmitting(false);
     }
   }, [business, isAuthenticated, reviewText, userRating]);
+  
+  // Handle anonymous review submission
+  const handleAnonymousReviewSubmit = useCallback(async (reviewData) => {
+    if (!reviewData.rating || reviewData.rating === 0) {
+      alert('Please select a rating');
+      return;
+    }
+    
+    if (!reviewData.reviewer_name) {
+      alert('Please enter your name');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      const response = await fetch(`/api/reviews`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          business_id: business.id,
+          rating: reviewData.rating,
+          comment: reviewData.comment,
+          reviewer_name: reviewData.reviewer_name,
+          reviewer_email: reviewData.reviewer_email || ''
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to submit review');
+      }
+      
+      // For anonymous reviews, we don't add them to the UI immediately
+      // since they require moderation
+      setReviewSuccess(true);
+      setTimeout(() => setReviewSuccess(false), 5000);
+    } catch (error) {
+      console.error('Error submitting anonymous review:', error);
+      alert('Failed to submit review. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [business]);
 
   return {
     business,
@@ -131,6 +181,7 @@ export default function useBusiness(id) {
     isAuthenticated,
     setReviewText,
     handleRatingChange,
-    handleReviewSubmit
+    handleReviewSubmit,
+    handleAnonymousReviewSubmit
   };
 }

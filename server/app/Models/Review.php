@@ -20,6 +20,8 @@ class Review extends Model
         'user_id',
         'rating',
         'comment',
+        'reviewer_name',
+        'reviewer_email',
         'is_approved',
     ];
 
@@ -32,7 +34,7 @@ class Review extends Model
     }
 
     /**
-     * Get the user that wrote the review.
+     * Get the user that owns the review.
      */
     public function user(): BelongsTo
     {

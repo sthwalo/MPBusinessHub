@@ -78,10 +78,14 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // Review routes
-// Review routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reviews', [App\Http\Controllers\ReviewController::class, 'store']);
 });
+
+// Public review routes
+Route::post('/reviews/anonymous', [App\Http\Controllers\ReviewController::class, 'storeAnonymousReview']);
+Route::get('/reviews', [App\Http\Controllers\ReviewController::class, 'index']);
+Route::get('/businesses/{businessId}/reviews', [App\Http\Controllers\ReviewController::class, 'getBusinessReviews']);
 
 // Advert routes
 Route::middleware('auth:sanctum')->group(function () {

@@ -23,7 +23,8 @@ function BusinessDetails() {
     isAuthenticated,
     setReviewText,
     handleRatingChange,
-    handleReviewSubmit
+    handleReviewSubmit,
+    handleAnonymousReviewSubmit
   } = useBusiness(id);
 
   useEffect(() => {
@@ -93,6 +94,7 @@ function BusinessDetails() {
             setReviewText={setReviewText}
             handleRatingChange={handleRatingChange}
             handleReviewSubmit={handleReviewSubmit}
+            handleAnonymousReviewSubmit={handleAnonymousReviewSubmit}
           />
           
           <ReviewsList reviews={business.reviews} />
