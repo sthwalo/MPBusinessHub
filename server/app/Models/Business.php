@@ -24,6 +24,7 @@ class Business extends Model
         'address',
         'phone',
         'website',
+        'image_url',
         'user_id',
         'status', // pending, approved, rejected
         'review_count',

@@ -119,3 +119,8 @@ Route::middleware('auth:sanctum')->post('/packages/upgrade', [App\Http\Controlle
 Route::post('/businesses/{id}/view', [BusinessController::class, 'incrementViewCount']);
 Route::post('/businesses/{id}/contact', [BusinessController::class, 'incrementContactCount']);
 
+// Image upload routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/images/business', [App\Http\Controllers\ImageController::class, 'uploadBusinessImage']);
+    Route::post('/images/product', [App\Http\Controllers\ImageController::class, 'uploadProductImage']);
+});
