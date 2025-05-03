@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
+import axios from 'axios'
 import DashboardHome from '../components/dashboard/DashboardHome'
 import BusinessProfile from '../components/dashboard/BusinessProfile'
 import ProductsManagement from '../components/dashboard/ProductsManagement'
