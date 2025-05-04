@@ -11,8 +11,9 @@ function Header({ isAuthenticated }) {
   }
 
   const handleLogout = () => {
-    // TODO: Implement proper logout functionality
-    localStorage.removeItem('token')
+    // Remove the correct token name
+    localStorage.removeItem('mpbh_token')
+    localStorage.removeItem('mpbh_user')
     navigate('/login')
     window.location.reload()
   }
