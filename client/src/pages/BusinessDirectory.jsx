@@ -49,8 +49,9 @@ function BusinessDirectory() {
           category: business.category,
           district: business.district,
           description: business.description,
-          package_type: 'Basic', // Default tier
-          rating: null, // No ratings yet
+          package_type: business.package_type, // Use the actual package type from the backend
+          rating: business.rating, // Use the actual rating from the backend
+          review_count: business.review_count, // Use the actual review count from the backend
           contact: {
             phone: business.phone,
             email: business.user ? business.user.email : null,
