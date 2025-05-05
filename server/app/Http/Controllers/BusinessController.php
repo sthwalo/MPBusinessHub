@@ -121,7 +121,7 @@ class BusinessController extends Controller
             'email' => $user->email,
             'website' => $business->website,
             'package_type' => $business->package_type ?? 'Basic',
-            'adverts_remaining' => 0,
+            'adverts_remaining' => $business->adverts_remaining ?? 0,
             'rating' => $averageRating,
             'review_count' => $business->reviews->count(),
             'subscription' => [
