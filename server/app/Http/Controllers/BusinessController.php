@@ -346,14 +346,19 @@ class BusinessController extends Controller
         
         // Transform businesses to match the client's expected format
         $transformedBusinesses = $businesses->map(function ($business) {
+            // Calculate average rating from approved reviews
+            $averageRating = $business->reviews()
+                ->where('is_approved', true)
+                ->avg('rating');
+            
             return [
                 'id' => $business->id,
                 'name' => $business->name,
                 'category' => $business->category,
                 'district' => $business->district,
                 'description' => $business->description,
-                'package_type' => 'Basic', // Default to Basic tier for now
-                'rating' => null, // No ratings yet
+                'package_type' => $business->package_type ?? 'Basic', // Use actual package type
+                'rating' => $averageRating, // Use calculated average rating
                 'contact' => [
                     'phone' => $business->phone,
                     'email' => $business->user->email,
