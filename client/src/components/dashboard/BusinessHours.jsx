@@ -126,7 +126,7 @@ function BusinessHours({ businessData, updateBusinessData }) {
       
       // Make API request to update operating hours
       const response = await fetch('/api/business/update', {
-        method: 'PUT',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

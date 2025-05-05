@@ -71,7 +71,6 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // Session management routes
-// Session management routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/sessions', [SessionController::class, 'index']);
     Route::delete('/sessions/{token}', [SessionController::class, 'destroy']);
@@ -101,7 +100,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/products', [App\Http\Controllers\ProductController::class, 'index']);
     Route::post('/products', [App\Http\Controllers\ProductController::class, 'store']);
     Route::get('/products/{id}', [App\Http\Controllers\ProductController::class, 'show']);
-    Route::put('/products/{id}', [App\Http\Controllers\ProductController::class, 'update']);
+    Route::post('/products/{id}', [App\Http\Controllers\ProductController::class, 'update']);
     Route::delete('/products/{id}', [App\Http\Controllers\ProductController::class, 'destroy']);
 });
 
