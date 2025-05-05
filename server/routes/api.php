@@ -57,7 +57,7 @@ Route::get('/test-verification-email/{email}', function($email) {
 // Protected business routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/business/details', [BusinessController::class, 'getBusinessDetails']);
-    Route::put('/business/update', [BusinessController::class, 'updateBusinessProfile']);
+    Route::post('/business/update', [BusinessController::class, 'updateBusinessProfile']);
     Route::delete('/business/remove-all', [BusinessController::class, 'removeAllBusinesses']); // Admin route to remove all businesses
 });
 

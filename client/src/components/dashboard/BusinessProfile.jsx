@@ -103,7 +103,7 @@ function BusinessProfile({ businessData, updateBusinessData }) {
           'Authorization': `Bearer ${localStorage.getItem('mpbh_token')}`
         },
         body: JSON.stringify({
-          name: formData.businessName,
+          businessName: formData.businessName,
           category: formData.category,
           district: formData.district,
           description: formData.description,
