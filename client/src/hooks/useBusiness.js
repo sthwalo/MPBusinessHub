@@ -137,7 +137,7 @@ export default function useBusiness(id) {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch(`/api/reviews`, {
+      const response = await fetch(`/api/reviews/anonymous`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

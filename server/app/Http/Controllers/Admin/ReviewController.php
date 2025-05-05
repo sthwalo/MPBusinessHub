@@ -47,15 +47,14 @@ class ReviewController extends Controller
         $review->is_approved = true;
         $review->save();
         
-        // Update business review count and average rating
+        // Update business review count
         $business = Business::find($review->business_id);
         if ($business) {
             $approvedReviews = Review::where('business_id', $business->id)
                 ->where('is_approved', true)
-                ->get();
+                ->count();
                 
-            $business->review_count = $approvedReviews->count();
-            $business->average_rating = $approvedReviews->avg('rating') ?: 0;
+            $business->review_count = $approvedReviews;
             $business->save();
         }
         

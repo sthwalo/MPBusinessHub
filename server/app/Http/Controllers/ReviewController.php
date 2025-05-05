@@ -154,4 +154,54 @@ class ReviewController extends Controller
             ], 500);
         }
     }
+    
+    /**
+     * Store a new anonymous review
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function storeAnonymousReview(Request $request): JsonResponse
+    {
+        try {
+            // Validate the request
+            $validator = Validator::make($request->all(), [
+                'business_id' => 'required|exists:businesses,id',
+                'rating' => 'required|integer|min:1|max:5',
+                'comment' => 'nullable|string',
+                'reviewer_name' => 'required|string|max:100',
+                'reviewer_email' => 'nullable|email|max:100'
+            ]);
+            
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+            
+            // Create the review with pending approval
+            $review = Review::create([
+                'business_id' => $request->business_id,
+                'user_id' => null, // No user association for anonymous reviews
+                'rating' => $request->rating,
+                'comment' => $request->comment,
+                'reviewer_name' => $request->reviewer_name,
+                'reviewer_email' => $request->reviewer_email,
+                'is_approved' => false // Anonymous reviews require approval
+            ]);
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Thank you for your review. It has been submitted for approval.'
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to submit review: ' . $e->getMessage(),
+                'debug' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
 }
