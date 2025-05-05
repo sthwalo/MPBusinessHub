@@ -64,11 +64,11 @@ function BusinessDetails() {
           
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <div className="relative h-64 bg-gray-200 rounded-lg mb-6">
-              {business.image_url ? (
+            {business.image_url ? (
                 <img 
-                  src={business.image_url} 
+                  src={business.image_url.startsWith('http') ? business.image_url : `http://localhost:8000${business.image_url}`} 
                   alt={business.name} 
-                  className="w-full h-full object-cover rounded-lg"
+                  className="w-full h-full object-contain rounded-lg"
                 />
               ) : (
                 <div className="flex items-center justify-center h-full">

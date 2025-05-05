@@ -102,7 +102,12 @@ function BusinessCard({ business }) {
       {/* Image */}
       <div className="relative h-48 bg-brand-gray-200">
         {image_url ? (
-          <img src={image_url} alt={name} className="w-full h-full object-cover" />
+          <img 
+            src={image_url.startsWith('http') ? image_url : `http://localhost:8000${image_url}`} 
+            //src={image_url.startsWith('http') ? image_url : `${process.env.REACT_APP_API_URL}${image_url}`}
+            alt={name} 
+            className="w-full h-full object-contain bg-white" 
+          />
         ) : (
           <div className="flex items-center justify-center h-full bg-brand-gray-100">
             <svg className="h-12 w-12 text-brand-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -443,6 +443,7 @@ class BusinessController extends Controller
                 'package_type' => $business->package_type ?? 'Basic', // Default to Basic tier if not set
                 'rating' => $averageRating, // Use calculated average or null
                 'review_count' => $business->review_count ?? $business->reviews->count(), // Add review count
+                'image_url' => $business->image_url, 
                 'contact' => [
                     'phone' => $business->phone,
                     'email' => $business->user->email,
