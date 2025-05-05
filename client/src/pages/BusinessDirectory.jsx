@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import Fuse from 'fuse.js'
 import BusinessCard from '../components/BusinessCard'
+import { Link } from 'react-router-dom'
 
 // Main Business Directory component
 function BusinessDirectory() {
@@ -15,6 +16,7 @@ function BusinessDirectory() {
   const [selectedDistrict, setSelectedDistrict] = useState(searchParams.get('district') || '') // Selected district filter
   const [filteredBusinesses, setFilteredBusinesses] = useState([]) // Filtered businesses based on search and filters
   const [debugMode, setDebugMode] = useState(false) // Debug mode toggle
+  const [activeAdverts, setActiveAdverts] = useState([]) // Active adverts from API
 
   // Predefined categories and districts from database schema
   const categories = ['Tourism', 'Agriculture', 'Construction', 'Events']
@@ -74,6 +76,30 @@ function BusinessDirectory() {
     // Execute the fetch function
     fetchBusinesses()
   }, [selectedCategory, selectedDistrict]) // Re-fetch when filters change
+
+  // Fetch active adverts
+  useEffect(() => {
+    const fetchActiveAdverts = async () => {
+      try {
+        const response = await fetch('/api/adverts/active')
+        
+        if (!response.ok) {
+          throw new Error(`API request failed with status ${response.status}`)
+        }
+        
+        const data = await response.json()
+        
+        if (data.status === 'success' && data.data) {
+          setActiveAdverts(data.data)
+        }
+      } catch (err) {
+        console.error('Error fetching active adverts:', err)
+        // Don't set error state here as it would affect the whole page
+      }
+    }
+    
+    fetchActiveAdverts()
+  }, []) // Only fetch once on component mount
 
   // Update URL parameters when filters change
   useEffect(() => {
@@ -238,6 +264,34 @@ function BusinessDirectory() {
           </div>
         )}
       </div>
+      
+      {/* Featured Adverts Section - only show if there are active adverts */}
+      {activeAdverts.length > 0 && (
+        <div className="mb-10">
+          <h2 className="text-2xl font-semibold mb-4">Featured Businesses</h2>
+          <div className="bg-blue-50 p-4 rounded-lg mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {activeAdverts.map(advert => (
+                <div key={advert.id} className="bg-white rounded-lg shadow-md overflow-hidden border-2 border-blue-400">
+                  <div className="p-4">
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-bold text-xl">{advert.title}</h3>
+                      <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">Sponsored</span>
+                    </div>
+                    <p className="text-gray-600 mt-2">{advert.description}</p>
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <p className="text-sm font-medium text-gray-900">{advert.business?.name}</p>
+                      <Link to={`/business/${advert.business_id}`} className="mt-2 inline-block text-blue-600 hover:text-blue-800">
+                        View Business →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Business Listings section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

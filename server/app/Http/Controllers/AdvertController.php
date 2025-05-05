@@ -127,4 +127,21 @@ class AdvertController extends Controller
             'message' => 'Advert deleted successfully'
         ]);
     }
+    public function getActiveAdverts(): JsonResponse
+    {
+        $activeAdverts = Advert::with('business')
+            ->whereHas('business', function($query) {
+                $query->where('status', 'approved');
+            })
+            ->where('status', 'active')
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        return response()->json([
+            'status' => 'success',
+            'data' => $activeAdverts
+        ]);
+    }
 }

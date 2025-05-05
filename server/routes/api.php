@@ -25,6 +25,8 @@ use App\Models\User;
 Route::get('/businesses', [BusinessController::class, 'index']);
 Route::get('/businesses/check', [BusinessController::class, 'check']);
 Route::post('/businesses/register', [BusinessRegistrationController::class, 'register']);
+// Get active adverts for the directory
+Route::get('/adverts/active', [App\Http\Controllers\AdvertController::class, 'getActiveAdverts']);
 // Dynamic route with {id} parameter must come after specific routes
 Route::get('/businesses/{id}', [BusinessController::class, 'show']);
 
