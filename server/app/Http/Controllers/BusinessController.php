@@ -57,7 +57,7 @@ class BusinessController extends Controller
                     'website' => $business->website,
                     'address' => $business->address
                 ],
-                'image' => null // No images yet
+                'image_url' => $business->image_url
             ];
         });
         
@@ -134,7 +134,8 @@ class BusinessController extends Controller
                 'contacts' => $business->contact_count ?? 0,
                 'reviews' => $business->reviews->count()
             ],
-            'operatingHours' => $operatingHours
+            'operatingHours' => $operatingHours,
+            'image_url' => $business->image_url
         ];
         
         return response()->json([
@@ -182,6 +183,7 @@ class BusinessController extends Controller
                 'website' => 'nullable|string|max:255',
                 'address' => 'required|string|max:255',
                 'operatingHours' => 'nullable|array',
+                'image_url' => 'nullable|string|max:255',
             ], [
                 'businessName.required' => 'Business name is required',
                 'businessName.max' => 'Business name cannot exceed 255 characters',
@@ -193,6 +195,7 @@ class BusinessController extends Controller
                 'email.required' => 'Email address is required',
                 'email.email' => 'Please enter a valid email address',
                 'address.required' => 'Business address is required',
+                'image_url.required' => 'Image URL is required',
             ]);
             
             if ($validator->fails()) {
@@ -225,6 +228,12 @@ class BusinessController extends Controller
             $business->phone = $request->phone;
             $business->website = $request->website;
             $business->address = $request->address;
+            
+            // Save image_url if provided
+            if ($request->has('image_url')) {
+                $business->image_url = $request->image_url;
+            }
+            
             $business->save();
             
             // Update operating hours if provided
@@ -297,7 +306,8 @@ class BusinessController extends Controller
                     'phone' => $business->phone,
                     'email' => $user->email,
                     'website' => $business->website,
-                    'operatingHours' => $operatingHours
+                    'operatingHours' => $operatingHours,
+                    'image_url' => $business->image_url
                 ]
             ]);
         } catch (\Exception $e) {
@@ -350,7 +360,7 @@ class BusinessController extends Controller
                     'website' => $business->website,
                     'address' => $business->address
                 ],
-                'image' => null // No images yet
+                'image_url' => $business->image_url // Use the actual image URL from the database
             ];
         });
         

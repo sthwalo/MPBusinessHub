@@ -57,7 +57,7 @@ function BusinessDirectory() {
             website: business.website,
             address: business.address
           },
-          image: null // No image yet
+          image_url: business.image_url
         }));
         
         // Update state with fetched data
