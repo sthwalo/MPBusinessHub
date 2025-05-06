@@ -1,0 +1,76 @@
+name: Server CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'server/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'server/**'
+
+jobs:
+  laravel-tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: testing
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: mbstring, pdo, pdo_pgsql, xml, zip
+        coverage: none
+    
+    - name: Copy .env
+      run: |
+        cd server
+        cp .env.example .env
+        sed -i 's/DB_CONNECTION=mysql/DB_CONNECTION=pgsql/g' .env
+        sed -i 's/DB_HOST=127.0.0.1/DB_HOST=localhost/g' .env
+        sed -i 's/DB_PORT=3306/DB_PORT=5432/g' .env
+        sed -i 's/DB_DATABASE=laravel/DB_DATABASE=testing/g' .env
+        sed -i 's/DB_USERNAME=root/DB_USERNAME=postgres/g' .env
+        sed -i 's/DB_PASSWORD=/DB_PASSWORD=postgres/g' .env
+    
+    - name: Install Dependencies
+      run: |
+        cd server
+        composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+    
+    - name: Generate key
+      run: |
+        cd server
+        php artisan key:generate
+    
+    - name: Directory Permissions
+      run: |
+        cd server
+        chmod -R 777 storage bootstrap/cache
+    
+    - name: Run Migrations
+      run: |
+        cd server
+        php artisan migrate --force
+    
+    - name: Run Tests
+      run: |
+        cd server
+        php artisan test
