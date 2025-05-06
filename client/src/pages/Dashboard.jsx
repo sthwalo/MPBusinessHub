@@ -30,6 +30,7 @@ function Dashboard() {
       ...prevData,
       ...updatedData
     }));
+    localStorage.setItem('simulatedBusinessData', JSON.stringify(prevData));
   };
 
   // Make the updateBusinessData function available globally for the BusinessProfile component
@@ -37,19 +38,17 @@ function Dashboard() {
 
   // Add this function to handle package upgrades
   const handlePackageUpgrade = (updatedBusinessData) => {
+    // Save to localStorage for persistence
+    localStorage.setItem('simulatedBusinessData', JSON.stringify(updatedBusinessData));
+    
     // Update the businessData in Dashboard's state
     setBusinessData(prev => ({
       ...prev,
-      package_type: updatedBusinessData.package_type,
-      package_id: updatedBusinessData.package_id,
-      adverts_remaining: updatedBusinessData.adverts_remaining,
-      billing_cycle: updatedBusinessData.billing_cycle,
-      subscription_ends_at: updatedBusinessData.subscription_ends_at,
+      ...updatedBusinessData,
       subscription: {
         ...prev.subscription,
-        status: 'active',
-        amount: updatedBusinessData.subscription?.amount || 0,
-        next_billing_date: updatedBusinessData.subscription_ends_at
+        ...updatedBusinessData.subscription,
+        status: 'active'
       }
     }));
   };
@@ -58,6 +57,13 @@ function Dashboard() {
     // Fetch the user's business data from our API
     const fetchBusinessData = async () => {
       try {
+        // Check for simulated data first
+        const simulatedData = localStorage.getItem('simulatedBusinessData');
+        if (simulatedData) {
+          setBusinessData(JSON.parse(simulatedData));
+          return;
+        }
+
         // Get the auth token from localStorage
         const token = localStorage.getItem('mpbh_token');
         if (!token) {
