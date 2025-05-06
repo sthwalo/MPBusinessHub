@@ -3,8 +3,8 @@ services:
   - type: web
     name: mpbusinesshub-api
     env: docker
-    dockerfilePath: ./server/Dockerfile
-    dockerContext: ./server
+    dockerfilePath: server/Dockerfile
+    dockerContext: .
     envVars:
       - key: APP_ENV
         value: production
@@ -49,8 +49,8 @@ services:
   - type: web
     name: mpbusinesshub-frontend
     env: docker
-    dockerfilePath: ./client/Dockerfile
-    dockerContext: ./client
+    dockerfilePath: client/Dockerfile
+    dockerContext: .
     envVars:
       - key: REACT_APP_API_URL
         fromService:
