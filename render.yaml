@@ -1,0 +1,72 @@
+services:
+  # Backend API service
+  - type: web
+    name: mpbusinesshub-api
+    env: docker
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        fromService:
+          name: mpbusinesshub-api
+          type: web
+          property: url
+      - key: FRONTEND_URL
+        fromService:
+          name: mpbusinesshub-frontend
+          type: web
+          property: url
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromService:
+          name: mpbusinesshub-db
+          type: pserv
+          property: host
+      - key: DB_PORT
+        value: 5432
+      - key: DB_DATABASE
+        fromService:
+          name: mpbusinesshub-db
+          type: pserv
+          property: database
+      - key: DB_USERNAME
+        fromService:
+          name: mpbusinesshub-db
+          type: pserv
+          property: username
+      - key: DB_PASSWORD
+        fromService:
+          name: mpbusinesshub-db
+          type: pserv
+          property: password
+
+  # Frontend service
+  - type: web
+    name: mpbusinesshub-frontend
+    env: docker
+    dockerfilePath: ./client/Dockerfile
+    dockerContext: ./client
+    envVars:
+      - key: REACT_APP_API_URL
+        fromService:
+          name: mpbusinesshub-api
+          type: web
+          property: url
+
+  # PostgreSQL database
+  - type: pserv
+    name: mpbusinesshub-db
+    env: docker
+    repo: https://github.com/render-examples/postgres
+    envVars:
+      - key: POSTGRES_USER
+        generateValue: true
+      - key: POSTGRES_PASSWORD
+        generateValue: true
+      - key: POSTGRES_DB
+        value: mpbusinesshub
