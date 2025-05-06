@@ -108,3 +108,5 @@ jspm_packages/
 /PROJECT_ROADMAP.md
 update-package.php
 make-admin.php
+.env.production
+.env.production.local

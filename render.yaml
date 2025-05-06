@@ -5,6 +5,9 @@ services:
     env: docker
     dockerfilePath: server/Dockerfile
     dockerContext: .
+    plan: standard
+    healthCheckPath: /api/health
+    autoDeploy: true
     envVars:
       - key: APP_ENV
         value: production
@@ -44,6 +47,20 @@ services:
           name: mpbusinesshub-db
           type: pserv
           property: password
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_HOST
+        value: smtp.mailtrap.io
+      - key: MAIL_PORT
+        value: 2525
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_ENCRYPTION
+        value: tls
+      - key: MAIL_FROM_ADDRESS
+        value: info@mpbusinesshub.co.za
 
   # Frontend service
   - type: web
@@ -51,6 +68,8 @@ services:
     env: docker
     dockerfilePath: client/Dockerfile
     dockerContext: .
+    plan: standard
+    autoDeploy: true
     envVars:
       - key: REACT_APP_API_URL
         fromService:
@@ -63,6 +82,11 @@ services:
     name: mpbusinesshub-db
     env: docker
     repo: https://github.com/render-examples/postgres
+    plan: standard
+    disk:
+      name: data
+      mountPath: /var/lib/postgresql/data
+      sizeGB: 10
     envVars:
       - key: POSTGRES_USER
         generateValue: true

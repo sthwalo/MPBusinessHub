@@ -1,0 +1,13 @@
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/mpbusinesshub/public_html/
+    - /bin/cp -R client/build/* $DEPLOYPATH
+    - /bin/cp -R server $DEPLOYPATH/server
+    - /bin/cp .env.production $DEPLOYPATH/server/.env
+    - cd $DEPLOYPATH/server && composer install --no-dev
+    - cd $DEPLOYPATH/server && php artisan migrate --force
+    - cd $DEPLOYPATH/server && php artisan storage:link
+    - cd $DEPLOYPATH/server && php artisan config:cache
+    - cd $DEPLOYPATH/server && php artisan route:cache
+    - chmod -R 755 $DEPLOYPATH/server/storage
+    - chmod -R 755 $DEPLOYPATH/server/bootstrap/cache
