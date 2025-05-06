@@ -39,8 +39,9 @@ jobs:
         cd client
         npm test -- --passWithNoTests
   
+    # Fallback FTP deployment if needed
     - name: Deploy to Afrihost via FTP
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push' && failure()
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
         server: ftp.mpbusinesshub.co.za
