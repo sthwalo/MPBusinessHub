@@ -18,13 +18,16 @@ function Pricing() {
         'Business Name Listing',
         'Area of Operation',
         'Basic Search Visibility',
-        'Business Category'
+        'Business Category',
+        
       ],
       limitations: [
         'No contact information displayed',
         'No ratings or reviews',
         'No website links',
-        'No product catalog'
+        'No product catalog',
+        'No monthly adverts',
+        'No social media features'
       ],
       buttonText: 'Get Started Free',
       recommended: false,
@@ -40,12 +43,15 @@ function Pricing() {
         'WhatsApp Number',
         'Star Ratings',
         'Contact Information Display',
-        'Enhanced Search Visibility'
+        'Enhanced Search Visibility',
+        'Basic Product Catalog (up to 5 items)',
+        '1 Monthly Advert',
+        'No Social Media Features'
       ],
       limitations: [
         'No email contact',
-        'No product catalog',
-        'No monthly adverts'
+        'Limited product catalog',
+        'Limited adverts'
       ],
       buttonText: 'Upgrade to Bronze',
       recommended: false,
@@ -58,14 +64,15 @@ function Pricing() {
       features: [
         'All Bronze features',
         'Email Contact',
-        'Product Catalog (up to 10 items)',
+        'Standard Product Catalog (up to 20 items)',
         '2 Monthly Adverts',
         'Priority in Search Results',
         'Customer Reviews',
-        'Social Media Features (1 per month)'
+        'Social Media Feature (1 per month)'
       ],
       limitations: [
-        'Limited adverts',
+        'Limited product catalog',
+        'Limited adverts'
       ],
       buttonText: 'Upgrade to Silver',
       recommended: true,
@@ -77,12 +84,13 @@ function Pricing() {
       description: 'Maximum visibility and premium features',
       features: [
         'All Silver features',
+        'Unlimited Product Catalog',
         '4 Monthly Adverts',
         '2 Social Media Features per month',
-        'Unlimited Product Catalog',
         'Featured Business Status',
         'Top Position in Search Results',
-        'Premium Support'
+        'Premium Support',
+        'No Limitations'
       ],
       limitations: [],
       buttonText: 'Upgrade to Gold',

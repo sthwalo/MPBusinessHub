@@ -76,6 +76,8 @@ function UpgradePlan({ businessData }) {
     name: pkg.name,
     monthlyPrice: pkg.price_monthly,
     annualPrice: pkg.price_annual,
+    price_monthly: pkg.price_monthly,  // Keep original for calculations
+    price_annual: pkg.price_annual,    // Keep original for calculations
     popular: pkg.name === 'Silver',
     features: [
       { name: 'Listing Visibility', included: true },
@@ -104,7 +106,7 @@ function UpgradePlan({ businessData }) {
   }
 
   const getDiscountPercentage = () => {
-    return 15 // 15% discount for annual billing
+    return 17 // 17% discount for annual billing
   }
 
   const getCurrentPlanIndex = () => {
@@ -259,7 +261,9 @@ function UpgradePlan({ businessData }) {
                     <div className="text-sm text-green-600 mt-1">
                       R{pkg.annualPrice} billed annually
                       <br />
-                      <span className="font-medium">Save R{pkg.monthlyPrice * 12 - pkg.annualPrice}</span>
+                      <span className="font-medium">
+                        Save R{(pkg.monthlyPrice * 12 - pkg.annualPrice).toLocaleString()}
+                      </span>
                     </div>
                   )}
                 </div>
