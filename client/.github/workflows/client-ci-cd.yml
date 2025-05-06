@@ -22,7 +22,7 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
-        cache-dependency-path: 'client/package-lock.json'
+        cache-dependency-path: client/package-lock.json
     
     - name: Install dependencies
       run: |
@@ -38,19 +38,16 @@ jobs:
       run: |
         cd client
         npm test -- --passWithNoTests
-    
-    # Netlify deployment step (for prototype hosting)
-    - name: Deploy to Netlify
-      uses: nwtgck/actions-netlify@v2
+  
+    - name: Deploy to Afrihost via FTP
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
-        publish-dir: './client/dist'
-        production-branch: main
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        deploy-message: "Deploy from GitHub Actions"
-        enable-pull-request-comment: true
-        enable-commit-comment: true
-        overwrites-pull-request-comment: true
-      env:
-        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-      timeout-minutes: 1
+        server: ftp.mpbusinesshub.co.za
+        username: admin@mpbusinesshub.co.za
+        password: ${{ secrets.AFRIHOST_FTP_PASSWORD }}
+        port: 21
+        protocol: ftps
+        local-dir: ./client/dist/
+        server-dir: /public_html/
+        dangerous-clean-slate: true
