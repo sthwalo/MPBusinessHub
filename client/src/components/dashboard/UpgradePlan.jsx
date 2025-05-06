@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-function UpgradePlan({ businessData }) {
+function UpgradePlan({ businessData, onUpgrade }) {
   const [selectedPlan, setSelectedPlan] = useState(businessData.package_type)
   const [billingCycle, setBillingCycle] = useState('monthly')
   const [isLoading, setIsLoading] = useState(false)
@@ -165,17 +165,25 @@ function UpgradePlan({ businessData }) {
       }
       
       // Update the business data with the response from the server
-      businessData.package_id = data.data.business.package_id
-      businessData.package_type = selectedPackage.name
-      businessData.adverts_remaining = data.data.business.adverts_remaining
-      businessData.billing_cycle = data.data.business.billing_cycle
-      businessData.subscription_ends_at = data.data.business.subscription_ends_at
+      const updatedBusiness = {
+        ...businessData,
+        package_id: data.data.business.package_id,
+        package_type: selectedPackage.name,
+        adverts_remaining: data.data.business.adverts_remaining,
+        billing_cycle: data.data.business.billing_cycle,
+        subscription_ends_at: data.data.business.subscription_ends_at,
+        subscription: {
+          ...businessData.subscription,
+          amount: billingCycle === 'monthly' 
+            ? selectedPackage.price_monthly 
+            : selectedPackage.price_annual / 12
+        }
+      }
       
-      // Update subscription amount based on billing cycle
-      businessData.subscription = businessData.subscription || {}
-      businessData.subscription.amount = billingCycle === 'monthly' 
-        ? selectedPackage.price_monthly 
-        : selectedPackage.price_annual / 12
+      // Call the onUpgrade callback with the updated business data
+      if (typeof onUpgrade === 'function') {
+        onUpgrade(updatedBusiness);
+      }
       
       setSuccessMessage(`Successfully ${isUpgrade() ? 'upgraded' : 'changed'} to ${selectedPlan} plan!`)
     } catch (error) {

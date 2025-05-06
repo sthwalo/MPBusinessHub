@@ -35,6 +35,25 @@ function Dashboard() {
   // Make the updateBusinessData function available globally for the BusinessProfile component
   window.updateBusinessData = updateBusinessData;
 
+  // Add this function to handle package upgrades
+  const handlePackageUpgrade = (updatedBusinessData) => {
+    // Update the businessData in Dashboard's state
+    setBusinessData(prev => ({
+      ...prev,
+      package_type: updatedBusinessData.package_type,
+      package_id: updatedBusinessData.package_id,
+      adverts_remaining: updatedBusinessData.adverts_remaining,
+      billing_cycle: updatedBusinessData.billing_cycle,
+      subscription_ends_at: updatedBusinessData.subscription_ends_at,
+      subscription: {
+        ...prev.subscription,
+        status: 'active',
+        amount: updatedBusinessData.subscription?.amount || 0,
+        next_billing_date: updatedBusinessData.subscription_ends_at
+      }
+    }));
+  };
+
   useEffect(() => {
     // Fetch the user's business data from our API
     const fetchBusinessData = async () => {
@@ -383,7 +402,7 @@ function Dashboard() {
                 <Route path="/products" element={<ProductsManagement businessData={businessData} />} />
                 <Route path="/adverts" element={<AdvertsManagement businessData={businessData} />} />
                 <Route path="/payments" element={<PaymentHistory businessData={businessData} />} />
-                <Route path="/upgrade" element={<UpgradePlan businessData={businessData} />} />
+                <Route path="/upgrade" element={<UpgradePlan businessData={businessData} onUpgrade={handlePackageUpgrade} />} />
                 <Route path="/session-management" element={<SessionManagement />} />
                 <Route path="/social-media" element={<SocialMediaManagement businessData={businessData} onUpdate={updateBusinessData} />} />
               </Routes>
