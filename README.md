@@ -122,7 +122,7 @@ The platform includes comprehensive social media integration:
 
 7. Start the Laravel development server:
    ```bash
-   php artisan serve --port=8080
+   php artisan serve --port=8000
    ```
 
 ### Frontend Setup (React)
@@ -174,4 +174,4 @@ npm test
 
 ## Recent Improvements
 
-See the [PROGRESS_REPORT.md](./PROGRESS_REPORT.md) file for a detailed overview of recent improvements and current project status.
+See the [Development.md](./Development.md) file for a detailed overview of recent improvements and current project status.
