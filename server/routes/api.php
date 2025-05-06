@@ -8,6 +8,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\SessionController;
+use App\Http\Controllers\SocialMediaController;
 use App\Models\User;
 
 /*
@@ -167,3 +168,9 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::post('/payfast/notify', [App\Http\Controllers\PayFastController::class, 'notify'])->name('payfast.notify');
 Route::get('/payfast/return', [App\Http\Controllers\PayFastController::class, 'return'])->name('payfast.return');
 Route::get('/payfast/cancel', [App\Http\Controllers\PayFastController::class, 'cancel'])->name('payfast.cancel');
+
+// Social media routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::put('/business/social-media', [SocialMediaController::class, 'update']);
+    Route::post('/business/social-media/feature', [SocialMediaController::class, 'createFeaturePost']);
+});

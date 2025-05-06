@@ -9,6 +9,7 @@ import PaymentHistory from '../components/dashboard/PaymentHistory'
 import UpgradePlan from '../components/dashboard/UpgradePlan'
 import SessionManagement from './SessionManagement'
 import BusinessHours from '../components/dashboard/BusinessHours'
+import SocialMediaManagement from '../components/dashboard/SocialMediaManagement'
 
 function Dashboard() {
   const [businessData, setBusinessData] = useState(null)
@@ -343,6 +344,18 @@ function Dashboard() {
                   </Link>
                 </li>
                 <li>
+                <Link 
+                  to="/dashboard/social-media" 
+                  className={`flex items-center p-2 rounded hover:bg-brand-gray-100 ${
+                    location.pathname === '/dashboard/social-media' ? 'bg-brand-gray-100' : ''
+                  }`}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <svg className="w-5 h-5 mr-2 text-brand-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Social Media
+                </Link>
                   <button 
                     onClick={handleLogout}
                     className="block w-full text-left px-4 py-2 rounded-md hover:bg-brand-gray-100 text-brand-gray-700"
@@ -371,6 +384,7 @@ function Dashboard() {
                 <Route path="/payments" element={<PaymentHistory businessData={businessData} />} />
                 <Route path="/upgrade" element={<UpgradePlan businessData={businessData} />} />
                 <Route path="/session-management" element={<SessionManagement />} />
+                <Route path="/social-media" element={<SocialMediaManagement businessData={businessData} onUpdate={updateBusinessData} />} />
               </Routes>
             ) : (
               <div className="text-center py-12">

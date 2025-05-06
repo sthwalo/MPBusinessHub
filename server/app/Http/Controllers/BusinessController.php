@@ -49,7 +49,9 @@ class BusinessController extends Controller
                 'category' => $business->category,
                 'district' => $business->district,
                 'description' => $business->description,
-                'package_type' => 'Basic', // Default to Basic tier for now
+                'package_type' => $business->package_type ?? 'Basic',
+                'adverts_remaining' => $business->adverts_remaining ?? 0,
+                'social_features_remaining' => $business->social_features_remaining ?? 0,
                 'rating' => null, // No ratings yet
                 'contact' => [
                     'phone' => $business->phone,
@@ -122,6 +124,9 @@ class BusinessController extends Controller
             'website' => $business->website,
             'package_type' => $business->package_type ?? 'Basic',
             'adverts_remaining' => $business->adverts_remaining ?? 0,
+            'billing_cycle' => $business->billing_cycle ?? 'monthly',
+            'subscription_ends_at' => $business->subscription_ends_at ?? null,
+            'social_features_remaining' => $business->social_features_remaining ?? 0,
             'rating' => $averageRating,
             'review_count' => $business->reviews->count(),
             'subscription' => [
@@ -184,6 +189,11 @@ class BusinessController extends Controller
                 'address' => 'required|string|max:255',
                 'operatingHours' => 'nullable|array',
                 'image_url' => 'nullable|string|max:255',
+                'package_type' => 'required|string|max:255',
+                'adverts_remaining' => 'required|integer',
+                'social_features_remaining' => 'required|integer',
+                'billing_cycle' => 'required|string|max:255',
+                'subscription_ends_at' => 'required|date',
             ], [
                 'businessName.required' => 'Business name is required',
                 'businessName.max' => 'Business name cannot exceed 255 characters',
@@ -196,6 +206,11 @@ class BusinessController extends Controller
                 'email.email' => 'Please enter a valid email address',
                 'address.required' => 'Business address is required',
                 'image_url.required' => 'Image URL is required',
+                'package_type.required' => 'Package type is required',
+                'adverts_remaining.required' => 'Adverts remaining is required',
+                'social_features_remaining.required' => 'Social features remaining is required',
+                'billing_cycle.required' => 'Billing cycle is required',
+                'subscription_ends_at.required' => 'Subscription ends at is required',
             ]);
             
             if ($validator->fails()) {
@@ -307,7 +322,8 @@ class BusinessController extends Controller
                     'email' => $user->email,
                     'website' => $business->website,
                     'operatingHours' => $operatingHours,
-                    'image_url' => $business->image_url
+                    'image_url' => $business->image_url,
+                    'social_media' => $business->social_media ?? []
                 ]
             ]);
         } catch (\Exception $e) {
@@ -361,9 +377,12 @@ class BusinessController extends Controller
                 'rating' => $averageRating, // Use calculated average rating
                 'contact' => [
                     'phone' => $business->phone,
+                    'whatsapp' => $business->phone,
                     'email' => $business->user->email,
                     'website' => $business->website,
-                    'address' => $business->address
+                    'address' => $business->address,
+                    'social_media' => $business->social_media ?? []
+
                 ],
                 'image_url' => $business->image_url // Use the actual image URL from the database
             ];
@@ -454,7 +473,8 @@ class BusinessController extends Controller
                     'email' => $business->user->email,
                     'website' => $business->website,
                     'address' => $business->address,
-                    'whatsapp' => $business->phone // Using phone as WhatsApp for now
+                    'whatsapp' => $business->phone, // Using phone as WhatsApp for now
+                    'social_media' => $business->social_media ?? []
                 ],
                 'hours' => $operatingHours,
                 'products' => $products, // Use the separately loaded products

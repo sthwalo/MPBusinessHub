@@ -64,7 +64,14 @@ class PackageController extends Controller
             // Set subscription end date (30 days for monthly, 365 days for annual)
             $days = $request->billing_cycle === 'monthly' ? 30 : 365;
             $business->subscription_ends_at = now()->addDays($days);
-            
+            // Set social features based on package
+            if ($package->name === 'Gold') {
+                $business->social_features_remaining = 2; // 2 social media features per month for Gold
+            } else if ($package->name === 'Silver') {
+                $business->social_features_remaining = 1; // 1 social media feature per month for Silver
+            } else {
+                $business->social_features_remaining = 0;
+            }
             $business->save();
             
             // In a real implementation, you would handle payment processing here
@@ -80,10 +87,11 @@ class PackageController extends Controller
                         'package_id' => $business->package_id,
                         'billing_cycle' => $business->billing_cycle,
                         'subscription_ends_at' => $business->subscription_ends_at,
-                        'adverts_remaining' => $business->adverts_remaining
+                        'adverts_remaining' => $business->adverts_remaining,
+                        'social_features_remaining' => $business->social_features_remaining
                     ]
                 ]
-            ]);
+           ]);
         } catch (\Exception $e) {
             Log::error('Error upgrading package: ' . $e->getMessage());
             return response()->json([

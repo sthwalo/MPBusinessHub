@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import PropTypes from 'prop-types'
+import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin, FaYoutube, FaTiktok } from 'react-icons/fa';
+    
 
 function BusinessCard({ business }) {
   console.log('BusinessCard props:', business) // Debug log
@@ -53,6 +55,51 @@ function BusinessCard({ business }) {
       </div>
     )
   }
+  
+  // Render social media icons
+  const renderSocialIcons = () => {
+    console.log('Social media data:', contact?.social_media);
+    if (!contact || !contact.social_media || package_type === 'Basic') {
+      return null;
+    }
+    
+    const { social_media } = contact;
+    
+    return (
+      <div className="social-icons flex space-x-2 mt-2">
+        {social_media?.facebook && (
+          <a href={social_media.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
+            <FaFacebook size={16} />
+          </a>
+        )}
+        {social_media?.instagram && (
+          <a href={social_media.instagram} target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:text-pink-800">
+            <FaInstagram size={16} />
+          </a>
+        )}
+        {social_media?.twitter && (
+          <a href={social_media.twitter} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-600">
+            <FaTwitter size={16} />
+          </a>
+        )}
+        {social_media?.linkedin && (
+          <a href={social_media.linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:text-blue-900">
+            <FaLinkedin size={16} />
+          </a>
+        )}
+        {social_media?.youtube && (
+          <a href={social_media.youtube} target="_blank" rel="noopener noreferrer" className="text-red-600 hover:text-red-800">
+            <FaYoutube size={16} />
+          </a>
+        )}
+        {social_media?.tiktok && (
+          <a href={social_media.tiktok} target="_blank" rel="noopener noreferrer" className="text-black hover:text-gray-700">
+            <FaTiktok size={16} />
+          </a>
+        )}
+      </div>
+    );
+  };
 
   // Render premium features based on tier
   const renderPremiumFeatures = () => {
@@ -151,6 +198,7 @@ function BusinessCard({ business }) {
         
         {/* Premium features */}
         {renderPremiumFeatures()}
+        {renderSocialIcons()}
         
         <div className="mt-4 flex justify-between items-center">
           <Link to={`/business/${id}`} className="text-brand-black hover:text-brand-gray-700 transition-colors font-medium">

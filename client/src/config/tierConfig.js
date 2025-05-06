@@ -40,13 +40,13 @@ const tierConfig = {
       listing: true,
       contactInfo: true,
       websiteLink: true,
-      whatsappButton: true,
+      whatsappButton: true,     // Enabled WhatsApp button for Bronze tier
       socialLinks: true,
       businessHours: true,
       products: false,
       maxProducts: 0,
-      adverts: false,
-      maxAdverts: 0,
+      adverts: true,            // Enable adverts for Bronze tier
+      maxAdverts: 1,            // 1 monthly advert for Bronze
       featuredPlacement: false,
       homepageShowcase: false,
       analyticsBasic: true,
@@ -73,7 +73,7 @@ const tierConfig = {
       products: true,
       maxProducts: 10,
       adverts: true,
-      maxAdverts: 3,
+      maxAdverts: 2,            // 2 monthly adverts for Silver
       featuredPlacement: false,
       homepageShowcase: false,
       analyticsBasic: true,
@@ -100,7 +100,7 @@ const tierConfig = {
       products: true,
       maxProducts: 30,
       adverts: true,
-      maxAdverts: 10,
+      maxAdverts: 4,            // 4 monthly adverts for Gold
       featuredPlacement: true,
       homepageShowcase: true,
       analyticsBasic: true,

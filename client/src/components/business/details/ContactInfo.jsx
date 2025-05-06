@@ -3,6 +3,7 @@ import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { packageFeatures, iconPaths } from '../../../utils/businessUtils';
+import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin, FaYoutube, FaTiktok, FaWhatsapp } from 'react-icons/fa';
 
 /**
  * ContactInfo component displays business contact information
@@ -27,7 +28,7 @@ const ContactInfo = ({ business }) => {
     );
   }
   
-  const { phone, email, website, address } = business.contact;
+  const { phone, email, website, address, whatsapp } = business.contact;
   
   // Track contact clicks
   const handleContactClick = async () => {
@@ -87,6 +88,81 @@ const ContactInfo = ({ business }) => {
         </div>
       )}
       
+      {/* Social Media Links */}
+      {business.contact.social_media && Object.keys(business.contact.social_media).length > 0 && (
+        <div className="mt-4">
+          <h3 className="text-md font-semibold mb-2">Social Media</h3>
+          <div className="flex flex-wrap gap-3">
+            {business.contact.social_media.facebook && (
+              <a 
+                href={business.contact.social_media.facebook} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800"
+                onClick={handleContactClick}
+              >
+                <FaFacebook size={24} />
+              </a>
+            )}
+            {business.contact.social_media.instagram && (
+              <a 
+                href={business.contact.social_media.instagram} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-pink-600 hover:text-pink-800"
+                onClick={handleContactClick}
+              >
+                <FaInstagram size={24} />
+              </a>
+            )}
+            {business.contact.social_media.twitter && (
+              <a 
+                href={business.contact.social_media.twitter} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:text-blue-600"
+                onClick={handleContactClick}
+              >
+                <FaTwitter size={24} />
+              </a>
+            )}
+            {business.contact.social_media.linkedin && (
+              <a 
+                href={business.contact.social_media.linkedin} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-700 hover:text-blue-900"
+                onClick={handleContactClick}
+              >
+                <FaLinkedin size={24} />
+              </a>
+            )}
+            {business.contact.social_media.youtube && (
+              <a 
+                href={business.contact.social_media.youtube} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-red-600 hover:text-red-800"
+                onClick={handleContactClick}
+              >
+                <FaYoutube size={24} />
+              </a>
+            )}
+            {business.contact.social_media.tiktok && (
+              <a 
+                href={business.contact.social_media.tiktok} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-black hover:text-gray-700"
+                onClick={handleContactClick}
+              >
+                <FaTiktok size={24} />
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+      
       <div className="mt-6 space-y-3">
         {phone && (
           <a 
@@ -98,6 +174,19 @@ const ContactInfo = ({ business }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={iconPaths.phone} />
             </svg>
             Call Now
+          </a>
+        )}
+        
+        {business.contact.whatsapp && (
+          <a 
+            href={`https://wa.me/${business.contact.whatsapp.replace(/[^0-9]/g, '')}`} 
+            className="btn btn-success w-full flex items-center justify-center bg-green-500 hover:bg-green-600 text-white"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={handleContactClick}
+          >
+            <FaWhatsapp className="h-5 w-5 mr-2" />
+            WhatsApp
           </a>
         )}
         

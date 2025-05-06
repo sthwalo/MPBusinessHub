@@ -30,8 +30,13 @@ class Business extends Model
         'review_count',
         'package_type',
         'adverts_remaining',
+        'social_media',
+        'social_features_remaining',
     ];
-
+    protected $casts = [
+        'social_media' => 'array',
+        'social_features_remaining' => 'integer',
+    ];
     /**
      * Get the user that owns the business.
      */
