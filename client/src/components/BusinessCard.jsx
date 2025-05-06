@@ -58,7 +58,6 @@ function BusinessCard({ business }) {
   
   // Render social media icons
   const renderSocialIcons = () => {
-    console.log('Social media data:', contact?.social_media);
     if (!contact || !contact.social_media || package_type === 'Basic') {
       return null;
     }

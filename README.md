@@ -13,6 +13,8 @@ The Mpumalanga Business Hub is designed to promote economic growth in the region
 - **Business Directory**: Searchable and filterable listing of local businesses by category and district
 - **Business Dashboard**: Statistics and profile management for business owners
 - **Tiered Memberships**: Different packages with varying benefits (Basic, Bronze, Silver, Gold)
+- **Social Media Integration**: Display and management of business social media profiles with tier-based allocation
+- **WhatsApp Integration**: Direct WhatsApp contact button for easier customer communication
 
 ## Technology Stack
 
@@ -22,6 +24,7 @@ The Mpumalanga Business Hub is designed to promote economic growth in the region
 - **State Management**: React Hooks and Context API
 - **Routing**: React Router v6
 - **HTTP Client**: Axios for API communication
+- **Icons**: React Icons for social media and UI elements
 
 ### Backend
 - **Framework**: Laravel 10
@@ -54,10 +57,23 @@ MPBusinessHub/
 | **Email Contact**          | ❌          | ❌           | ✅           | ✅          |
 | **Star Ratings**           | ❌          | ✅           | ✅           | ✅          |
 | **Product Catalog**        | ❌          | ❌           | ✅           | ✅          |
-| **Monthly Adverts**        | 0           | 0            | 1            | 4           |
-| **Social Media Feature**   | ❌          | ❌           | ❌           | 1/month     |
+| **Monthly Adverts**        | 0           | 1           | 2           | 4           |
+| **Social Media Links**     | ❌          | ✅           | ✅           | ✅          |
+| **Social Media Features**  | 0           | 0           | 1           | 2           |
 
 **Annual Pricing**: Bronze: R2,000/year, Silver: R5,000/year, Gold: R10,000/year
+
+## Social Media Features
+
+The platform includes comprehensive social media integration:
+
+- **Social Media Links**: Businesses can add links to their social media profiles (Facebook, Instagram, Twitter, LinkedIn, YouTube, TikTok)
+- **Social Media Management**: Dashboard interface for managing social media links
+- **Tier-Based Allocation**: 
+  - Bronze: Display social media links
+  - Silver: Display links + 1 social media feature per month
+  - Gold: Display links + 2 social media features per month
+- **WhatsApp Integration**: Direct WhatsApp contact button using the business phone number
 
 ## Installation and Setup
 
@@ -159,80 +175,3 @@ npm test
 ## Recent Improvements
 
 See the [PROGRESS_REPORT.md](./PROGRESS_REPORT.md) file for a detailed overview of recent improvements and current project status.
-- PHP (>= 8.1)
-- PostgreSQL (>= 13.0)
-- Composer
-
-### Installation
-
-1. Clone the repository
-```bash
-git clone <repository-url>
-cd MPBH
-```
-
-2. Install backend dependencies
-```bash
-cd server
-composer install
-```
-
-3. Configure environment variables
-```bash
-cp .env.example .env
-# Edit .env with your database credentials
-```
-
-4. Set up the database
-```bash
-php setup-database.php
-```
-
-5. Install frontend dependencies
-```bash
-cd ../client
-npm install
-```
-
-### Running the Development Server
-
-1. Start the PHP backend server
-```bash
-cd server
-php -S localhost:8080 -t public
-```
-
-2. Start the frontend development server
-```bash
-cd client
-npm run dev
-```
-
-3. Access the application at http://localhost:3000
-
-## API Endpoints
-
-The API documentation is available in the [docs/api-reference.md](./docs/api-reference.md) file.
-
-## Deployment
-
-Deployment instructions for Afrihost shared hosting are available in the [docs/deployment.md](./docs/deployment.md) file.
-
-## Documentation
-
-Comprehensive documentation is available in the [docs](./docs) directory:
-
-- [Project Overview](./docs/project-overview.md)
-- [API Reference](./docs/api-reference.md)
-- [Database Schema](./docs/database-schema.md)
-- [Deployment Guide](./docs/deployment.md)
-- [Membership Tiers](./docs/membership-tiers.md)
-
-Frontend:
-User Form → React State → Axios POST → Backend API
-
-Backend:
-API Route → Middleware → AuthController → User Model → Database
-
-Response:
-Database → User Model → AuthController → JSON Response → Frontend
