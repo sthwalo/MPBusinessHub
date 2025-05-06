@@ -59,13 +59,13 @@ function Pricing() {
         'All Bronze features',
         'Email Contact',
         'Product Catalog (up to 10 items)',
-        '1 Monthly Advert',
+        '2 Monthly Adverts',
         'Priority in Search Results',
-        'Customer Reviews'
+        'Customer Reviews',
+        'Social Media Features (1 per month)'
       ],
       limitations: [
         'Limited adverts',
-        'No social media features'
       ],
       buttonText: 'Upgrade to Silver',
       recommended: true,
@@ -78,7 +78,7 @@ function Pricing() {
       features: [
         'All Silver features',
         '4 Monthly Adverts',
-        '1 Social Media Feature per month',
+        '2 Social Media Features per month',
         'Unlimited Product Catalog',
         'Featured Business Status',
         'Top Position in Search Results',

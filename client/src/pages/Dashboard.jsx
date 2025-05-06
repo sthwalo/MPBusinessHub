@@ -147,6 +147,7 @@ function Dashboard() {
     localStorage.removeItem('mpbh_user')
     // Redirect to login page
     navigate('/login')
+    window.location.reload() // Add this line to ensure complete logout
   }
 
   const toggleSidebar = () => {

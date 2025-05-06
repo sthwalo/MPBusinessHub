@@ -74,7 +74,7 @@ class PackageController extends Controller
             }
             $business->save();
             
-            // In a real implementation, you would handle payment processing here
+            // In a real implementation, I will handle payment processing here
             // and only update the package after successful payment
             
             return response()->json([

@@ -52,6 +52,7 @@ function App() {
               } 
             />
             <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
+            <Route path="/pricing" element={<Pricing />} />
             {/* Add other routes here */}
           </Routes>
         </Suspense>

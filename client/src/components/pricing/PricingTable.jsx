@@ -158,10 +158,10 @@ const PricingTable = () => {
                   <li className="flex">
                     {data.features.social_media_feature ? (
                       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-600">
-                        1
+                        {tier === 'Gold' ? '2' : '1'}
                       </span>
                     ) : getFeatureIcon(false)}
-                    <span className="ml-3 text-base text-brand-gray-700">Social media feature</span>
+                    <span className="ml-3 text-base text-brand-gray-700">Social media feature{tier === 'Gold' ? 's' : ''} per month</span>
                   </li>
                 </ul>
               </div>
@@ -210,7 +210,7 @@ const PricingTable = () => {
                   { id: 'star_ratings', name: 'Star Ratings' },
                   { id: 'product_catalog', name: 'Product Catalog' },
                   { id: 'monthly_adverts', name: 'Monthly Adverts', isNumeric: true },
-                  { id: 'social_media_feature', name: 'Social Media Feature', isBoolean: true },
+                  { id: 'social_media_feature', name: 'Social Media Features', isNumeric: true, isSocial: true },
                 ].map((feature) => (
                   <tr key={feature.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -218,10 +218,12 @@ const PricingTable = () => {
                     </td>
                     {Object.entries(pricingData).map(([tier, data]) => (
                       <td key={`${tier}-${feature.id}`} className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {feature.isNumeric ? (
+                        {feature.isNumeric && !feature.isSocial ? (
                           data.features[feature.id]
+                        ) : feature.isSocial ? (
+                          tier === 'Gold' ? '2/month' : tier === 'Silver' ? '1/month' : 'No'
                         ) : feature.isBoolean ? (
-                          data.features[feature.id] ? '1/month' : 'No'
+                          data.features[feature.id] ? 'Yes' : 'No'
                         ) : (
                           getFeatureIcon(data.features[feature.id])
                         )}
