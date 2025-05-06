@@ -23,10 +23,11 @@
     "preview": "vite preview",
     "test": "vitest run"
   },
-
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.2",
     "@sentry/react": "^9.10.1",
+    "@sentry/replay": "^7.116.0",
+    "@sentry/tracing": "^7.120.3",
     "axios": "^1.8.4",
     "fuse.js": "^6.6.2",
     "react": "^18.2.0",

@@ -1,13 +1,21 @@
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/mpbusinesshub/public_html/
+    # Copy client build to public_html
+    - export DEPLOYPATH=/home/mpbusis6k1d8/public_html/
+    - /bin/rm -rf $DEPLOYPATH/*
     - /bin/cp -R client/build/* $DEPLOYPATH
-    - /bin/cp -R server $DEPLOYPATH/server
+    
+    # Set up Laravel backend
+    - mkdir -p $DEPLOYPATH/server
+    - /bin/cp -R server/* $DEPLOYPATH/server/
     - /bin/cp .env.production $DEPLOYPATH/server/.env
-    - cd $DEPLOYPATH/server && composer install --no-dev
-    - cd $DEPLOYPATH/server && php artisan migrate --force
-    - cd $DEPLOYPATH/server && php artisan storage:link
+    
+    # Install dependencies and optimize
+    - cd $DEPLOYPATH/server && composer install --no-dev --optimize-autoloader
     - cd $DEPLOYPATH/server && php artisan config:cache
     - cd $DEPLOYPATH/server && php artisan route:cache
+    - cd $DEPLOYPATH/server && php artisan view:cache
+    
+    # Set permissions
     - chmod -R 755 $DEPLOYPATH/server/storage
     - chmod -R 755 $DEPLOYPATH/server/bootstrap/cache

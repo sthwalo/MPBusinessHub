@@ -1,28 +1,29 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import Header from './components/Header'
 import Footer from './components/Footer'
-import Home from './pages/Home'
-import BusinessDirectory from './pages/BusinessDirectory'
-import BusinessDetails from './pages/BusinessDetails'
-import AdminDashboard from './pages/AdminDashboard'
-import Dashboard from './pages/Dashboard'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
-import VerifyEmail from './pages/VerifyEmail'
-import ResendVerification from './pages/ResendVerification'
-import NotFound from './pages/NotFound'
-import Pricing from './pages/Pricing'
-/* App.css import removed - using Tailwind CSS now */
+import LoadingSpinner from './components/LoadingSpinner.jsx' // You'll need to create this
+
+// Lazy load all page components
+const Home = lazy(() => import('./pages/Home'))
+const BusinessDirectory = lazy(() => import('./pages/BusinessDirectory'))
+const BusinessDetails = lazy(() => import('./pages/BusinessDetails'))
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Login = lazy(() => import('./pages/Login'))
+const Register = lazy(() => import('./pages/Register'))
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
+const VerifyEmail = lazy(() => import('./pages/VerifyEmail'))
+const ResendVerification = lazy(() => import('./pages/ResendVerification'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+const Pricing = lazy(() => import('./pages/Pricing'))
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
-    // Check if user is authenticated on component mount
     const token = localStorage.getItem('mpbh_token')
     if (token) {
       setIsAuthenticated(true)
@@ -33,53 +34,30 @@ function App() {
     <div className="app-container">
       <Header isAuthenticated={isAuthenticated} />
       <main className="main-content">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/directory" element={<BusinessDirectory />} />
-          <Route path="/business/:id" element={<BusinessDetails />} />
-          <Route 
-            path="/dashboard/*" 
-            element={
-              isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />
-            } 
-          />
-          <Route path="/admin/*" 
-            element={
-              isAuthenticated ? <AdminDashboard /> : <Navigate to="/login" replace />
-            } 
-          />
-          <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/resend-verification" element={<ResendVerification />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/directory" element={<BusinessDirectory />} />
+            <Route path="/business/:id" element={<BusinessDetails />} />
+            <Route 
+              path="/dashboard/*" 
+              element={
+                isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />
+              } 
+            />
+            <Route 
+              path="/admin/*" 
+              element={
+                isAuthenticated ? <AdminDashboard /> : <Navigate to="/login" replace />
+              } 
+            />
+            <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
+            {/* Add other routes here */}
+          </Routes>
+        </Suspense>
       </main>
       <Footer />
-      {/* Toast notifications */}
-      <Toaster 
-        position="top-right" 
-        toastOptions={{
-          duration: 3000,
-          style: {
-            background: '#363636',
-            color: '#fff',
-          },
-          success: {
-            style: {
-              background: '#166534', // Tailwind green-800
-            },
-          },
-          error: {
-            style: {
-              background: '#991b1b', // Tailwind red-800
-            },
-          }
-        }}
-      />
+      <Toaster position="top-right" />
     </div>
   )
 }
