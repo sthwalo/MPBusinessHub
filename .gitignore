@@ -77,6 +77,7 @@ server/.env
 .env.development.local
 .env.test.local
 .env.production.local
+.env.ftp
 
 # Logs
 logs
@@ -174,4 +175,9 @@ DOCKER_API_REGIONAL_REGIONAL
 DOCKER_API_REGIONAL_REGIONAL_PLAN
 DOCKER_API_REGIONAL_REGIONAL_REGION
 
-#GitHub
+deploy.sh
+deploy-ftp.sh
+deploy.zip
+lftp-script.txt
+deploy.ps1
+deploy.php

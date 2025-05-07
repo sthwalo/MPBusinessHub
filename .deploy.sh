@@ -3,45 +3,29 @@
 # Exit on error
 set -e
 
-# Check if we're in the right directory
-if [ ! -d "client" ] || [ ! -d "server" ]; then
-    echo "Error: Must be run from project root directory"
-    exit 1
-fi
+# Ensure clean build
+echo "🧹 Cleaning previous builds..."
+rm -rf client/dist
 
-# Build React app
-echo "🏗️  Building React application..."
+# Install and build
+echo "🏗️ Building React application..."
 cd client
 npm install
 npm run build
 cd ..
 
-# Check if build directory exists
-if [ ! -d "client/dist" ]; then
-    echo "❌ Build failed - dist directory not found"
-    exit 1
-fi
-
-# Stage changes
-echo "📦 Staging changes..."
-git add client/dist
+# Commit only deployment configs
+echo "📦 Staging deployment files..."
 git add .cpanel.yml
 git add server/
+git add -f client/dist  # Force add dist directory just for deployment
 
-# Commit and push changes
-echo "🚀 Committing and pushing changes..."
-git commit -m "Build for deployment: $(date '+%Y-%m-%d %H:%M:%S')"
+# Commit and push
+echo "🚀 Pushing to Afrihost repository..."
+git commit -m "Deploy: $(date '+%Y-%m-%d %H:%M:%S')"
 git push origin main
 
-# Output success message with clear next steps
-echo ""
-echo "✅ Changes pushed to GitHub successfully!"
-echo ""
-echo "Next steps:"
-echo "1. Go to cPanel → Git Version Control"
-echo "2. Select 'MPBusinessHub' repository"
-echo "3. Click 'Update from Remote' if not automatically updated"
-echo "4. Check deployment logs for status"
-echo ""
-echo "🌐 cPanel URL: https://mpbusinesshub.co.za/cpanel"
-echo "📁 Repository: MPBusinessHub"
+# Clean up - remove dist from git but keep files
+echo "🧹 Cleaning up..."
+git reset --soft HEAD~1
+git restore --staged client/dist
