@@ -1,0 +1,32 @@
+deployment:
+  tasks:
+    # Deploy React frontend
+    - export DEPLOYPATH=/home/mpbusis6k1d8/public_html/
+    - cd /home/mpbusis6k1d8/repositories/MPBusinessHub/client
+    - npm install --production
+    - npm run build
+    - cp -R dist/* $DEPLOYPATH
+
+    # Deploy Laravel backend
+    - export SERVERPATH=/home/mpbusis6k1d8/public_html/server
+    - mkdir -p $SERVERPATH
+    - cd /home/mpbusis6k1d8/repositories/MPBusinessHub/server
+    - composer install --no-dev --optimize-autoloader
+    - cp -R * $SERVERPATH/
+    - cp ../.env.production $SERVERPATH/.env
+    
+    # Set permissions
+    - cd $SERVERPATH
+    - chmod -R 755 storage
+    - chmod -R 755 bootstrap/cache
+    
+    # Cache Laravel configs
+    - php artisan config:cache
+    - php artisan route:cache
+    - php artisan view:cache
+    
+    # Run database migrations
+    - php artisan migrate --force
+    
+    # Verify existing accounts (if needed)
+    - php artisan tinker --execute="DB::table('users')->whereNull('email_verified_at')->update(['email_verified_at' => now()]);"
