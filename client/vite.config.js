@@ -16,6 +16,11 @@ export default defineConfig({
     },
     chunkSizeWarningLimit: 1000 // Adjust as needed
   },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/setupTests.js'],
+    globals: true
+  },
   server: {
     port: 3000,
     proxy: {

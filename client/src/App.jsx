@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import Header from './components/Header'
 import Footer from './components/Footer'
-import LoadingSpinner from './components/LoadingSpinner.jsx' // You'll need to create this
+import LoadingSpinner from './components/LoadingSpinner.jsx' 
 
 // Lazy load all page components
 const Home = lazy(() => import('./pages/Home'))
@@ -53,7 +53,14 @@ function App() {
             />
             <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
             <Route path="/pricing" element={<Pricing />} />
-            {/* Add other routes here */}
+            
+            {/* Add the missing routes */}
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/verify-email/:token" element={<VerifyEmail />} />
+            <Route path="/resend-verification" element={<ResendVerification />} />
+            <Route path="*" element={<NotFound />} /> {/* 404 catch-all route */}
           </Routes>
         </Suspense>
       </main>
