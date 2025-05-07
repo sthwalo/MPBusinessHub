@@ -85,7 +85,23 @@ api.interceptors.response.use(
 // API functions
 export const fetchPackageTiers = async () => {
   try {
-    return await api.get('/packages/tiers');
+    const response = await api.get('/packages');
+    // Transform the response to match the expected format
+    const transformed = response.data.data.reduce((acc, pkg) => ({
+      ...acc,
+      [pkg.name]: {
+        price_monthly: parseFloat(pkg.price_monthly),
+        price_yearly: parseFloat(pkg.price_annual),
+        features: {
+          ...pkg.features,
+          social_media_feature: pkg.name === 'Gold' ? 2 : pkg.name === 'Silver' ? 1 : 0,
+          monthly_adverts: pkg.advert_limit,
+          product_catalog: pkg.product_limit > 0
+        }
+      }
+    }), {});
+    
+    return { data: transformed };
   } catch (error) {
     if (error.htmlError) {
       console.error('Server Error:', error.htmlError);

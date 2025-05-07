@@ -30,15 +30,40 @@ function Dashboard() {
       ...prevData,
       ...updatedData
     }));
+    localStorage.setItem('simulatedBusinessData', JSON.stringify(prevData));
   };
 
   // Make the updateBusinessData function available globally for the BusinessProfile component
   window.updateBusinessData = updateBusinessData;
 
+  // Add this function to handle package upgrades
+  const handlePackageUpgrade = (updatedBusinessData) => {
+    // Save to localStorage for persistence
+    localStorage.setItem('simulatedBusinessData', JSON.stringify(updatedBusinessData));
+    
+    // Update the businessData in Dashboard's state
+    setBusinessData(prev => ({
+      ...prev,
+      ...updatedBusinessData,
+      subscription: {
+        ...prev.subscription,
+        ...updatedBusinessData.subscription,
+        status: 'active'
+      }
+    }));
+  };
+
   useEffect(() => {
     // Fetch the user's business data from our API
     const fetchBusinessData = async () => {
       try {
+        // Check for simulated data first
+        const simulatedData = localStorage.getItem('simulatedBusinessData');
+        if (simulatedData) {
+          setBusinessData(JSON.parse(simulatedData));
+          return;
+        }
+
         // Get the auth token from localStorage
         const token = localStorage.getItem('mpbh_token');
         if (!token) {
@@ -383,7 +408,7 @@ function Dashboard() {
                 <Route path="/products" element={<ProductsManagement businessData={businessData} />} />
                 <Route path="/adverts" element={<AdvertsManagement businessData={businessData} />} />
                 <Route path="/payments" element={<PaymentHistory businessData={businessData} />} />
-                <Route path="/upgrade" element={<UpgradePlan businessData={businessData} />} />
+                <Route path="/upgrade" element={<UpgradePlan businessData={businessData} onUpgrade={handlePackageUpgrade} />} />
                 <Route path="/session-management" element={<SessionManagement />} />
                 <Route path="/social-media" element={<SocialMediaManagement businessData={businessData} onUpdate={updateBusinessData} />} />
               </Routes>

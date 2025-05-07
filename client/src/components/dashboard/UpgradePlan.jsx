@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-function UpgradePlan({ businessData }) {
+function UpgradePlan({ businessData, onUpgrade }) {
   const [selectedPlan, setSelectedPlan] = useState(businessData.package_type)
   const [billingCycle, setBillingCycle] = useState('monthly')
   const [isLoading, setIsLoading] = useState(false)
@@ -76,6 +76,8 @@ function UpgradePlan({ businessData }) {
     name: pkg.name,
     monthlyPrice: pkg.price_monthly,
     annualPrice: pkg.price_annual,
+    price_monthly: pkg.price_monthly,  // Keep original for calculations
+    price_annual: pkg.price_annual,    // Keep original for calculations
     popular: pkg.name === 'Silver',
     features: [
       { name: 'Listing Visibility', included: true },
@@ -104,7 +106,7 @@ function UpgradePlan({ businessData }) {
   }
 
   const getDiscountPercentage = () => {
-    return 15 // 15% discount for annual billing
+    return 17 // 17% discount for annual billing
   }
 
   const getCurrentPlanIndex = () => {
@@ -163,17 +165,25 @@ function UpgradePlan({ businessData }) {
       }
       
       // Update the business data with the response from the server
-      businessData.package_id = data.data.business.package_id
-      businessData.package_type = selectedPackage.name
-      businessData.adverts_remaining = data.data.business.adverts_remaining
-      businessData.billing_cycle = data.data.business.billing_cycle
-      businessData.subscription_ends_at = data.data.business.subscription_ends_at
+      const updatedBusiness = {
+        ...businessData,
+        package_id: data.data.business.package_id,
+        package_type: selectedPackage.name,
+        adverts_remaining: data.data.business.adverts_remaining,
+        billing_cycle: data.data.business.billing_cycle,
+        subscription_ends_at: data.data.business.subscription_ends_at,
+        subscription: {
+          ...businessData.subscription,
+          amount: billingCycle === 'monthly' 
+            ? selectedPackage.price_monthly 
+            : selectedPackage.price_annual / 12
+        }
+      }
       
-      // Update subscription amount based on billing cycle
-      businessData.subscription = businessData.subscription || {}
-      businessData.subscription.amount = billingCycle === 'monthly' 
-        ? selectedPackage.price_monthly 
-        : selectedPackage.price_annual / 12
+      // Call the onUpgrade callback with the updated business data
+      if (typeof onUpgrade === 'function') {
+        onUpgrade(updatedBusiness);
+      }
       
       setSuccessMessage(`Successfully ${isUpgrade() ? 'upgraded' : 'changed'} to ${selectedPlan} plan!`)
     } catch (error) {
@@ -259,7 +269,9 @@ function UpgradePlan({ businessData }) {
                     <div className="text-sm text-green-600 mt-1">
                       R{pkg.annualPrice} billed annually
                       <br />
-                      <span className="font-medium">Save R{pkg.monthlyPrice * 12 - pkg.annualPrice}</span>
+                      <span className="font-medium">
+                        Save R{(pkg.monthlyPrice * 12 - pkg.annualPrice).toLocaleString()}
+                      </span>
                     </div>
                   )}
                 </div>

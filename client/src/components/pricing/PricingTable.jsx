@@ -90,7 +90,7 @@ const PricingTable = () => {
               onClick={toggleBillingCycle}
               className={`${billingCycle === 'yearly' ? 'bg-white shadow-brand-sm' : 'text-brand-gray-600'} rounded-full py-2 px-6 text-sm font-medium transition-all`}
             >
-              Yearly <span className="text-tier-gold font-semibold">Save up to 16%</span>
+              Yearly <span className="text-tier-gold font-semibold">Save up to 10%</span>
             </button>
           </div>
         </div>
@@ -146,8 +146,14 @@ const PricingTable = () => {
                     <span className="ml-3 text-base text-brand-gray-700">Star ratings</span>
                   </li>
                   <li className="flex">
-                    {getFeatureIcon(data.features.product_catalog)}
-                    <span className="ml-3 text-base text-brand-gray-700">Product catalog</span>
+                    {data.features.product_catalog ? (
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-600">
+                        {data.features.product_catalog === true ? '∞' : data.features.product_catalog}
+                      </span>
+                    ) : getFeatureIcon(false)}
+                    <span className="ml-3 text-base text-brand-gray-700">
+                      {data.features.product_catalog === true ? 'Unlimited' : data.features.product_catalog || 'No'} Products
+                    </span>
                   </li>
                   <li className="flex">
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-600">
@@ -208,7 +214,7 @@ const PricingTable = () => {
                   { id: 'whatsapp', name: 'WhatsApp Contact' },
                   { id: 'email', name: 'Email Contact' },
                   { id: 'star_ratings', name: 'Star Ratings' },
-                  { id: 'product_catalog', name: 'Product Catalog' },
+                  { id: 'product_catalog', name: 'Product Catalog', isNumeric: true },
                   { id: 'monthly_adverts', name: 'Monthly Adverts', isNumeric: true },
                   { id: 'social_media_feature', name: 'Social Media Features', isNumeric: true, isSocial: true },
                 ].map((feature) => (
