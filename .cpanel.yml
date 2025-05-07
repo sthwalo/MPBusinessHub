@@ -1,21 +1,30 @@
 deployment:
   tasks:
-    # Copy client build to public_html
+    # Build React app first
     - export DEPLOYPATH=/home/mpbusis6k1d8/public_html/
-    - /bin/rm -rf $DEPLOYPATH/*
-    - /bin/cp -R client/build/* $DEPLOYPATH
+    - cd $DEPLOYPATH
+    - rm -rf *
     
-    # Set up Laravel backend
-    - mkdir -p $DEPLOYPATH/server
-    - /bin/cp -R server/* $DEPLOYPATH/server/
-    - /bin/cp .env.production $DEPLOYPATH/server/.env
+    # Deploy React build
+    - cd /home/mpbusis6k1d8/repositories/MPBusinessHub/client
+    - npm install
+    - npm run build
+    - cp -R dist/* $DEPLOYPATH
     
-    # Install dependencies and optimize
-    - cd $DEPLOYPATH/server && composer install --no-dev --optimize-autoloader
-    - cd $DEPLOYPATH/server && php artisan config:cache
-    - cd $DEPLOYPATH/server && php artisan route:cache
-    - cd $DEPLOYPATH/server && php artisan view:cache
+    # Deploy Laravel backend
+    - export SERVERPATH=/home/mpbusis6k1d8/public_html/server
+    - mkdir -p $SERVERPATH
+    - cd /home/mpbusis6k1d8/repositories/MPBusinessHub/server
+    - cp -R * $SERVERPATH/
+    - cp ../.env.production $SERVERPATH/.env
+    
+    # Install Laravel dependencies
+    - cd $SERVERPATH
+    - composer install --no-dev --optimize-autoloader
+    - php artisan config:cache
+    - php artisan route:cache
+    - php artisan view:cache
     
     # Set permissions
-    - chmod -R 755 $DEPLOYPATH/server/storage
-    - chmod -R 755 $DEPLOYPATH/server/bootstrap/cache
+    - chmod -R 755 storage
+    - chmod -R 755 bootstrap/cache
