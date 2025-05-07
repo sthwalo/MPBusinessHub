@@ -21,4 +21,7 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
-
+.env.bak
+.env.backup
+.env.production.bak
+/Development.md
