@@ -16,7 +16,7 @@ cd ..
 
 # Commit only deployment configs
 echo "📦 Staging deployment files..."
-git add .cpanel.yml
+git add cpanel.yml
 git add server/
 git add -f client/dist  # Force add dist directory just for deployment
 
