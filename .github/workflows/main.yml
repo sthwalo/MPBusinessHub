@@ -1,0 +1,103 @@
+name: MPBusinessHub CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testing
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: mbstring, pdo, pdo_pgsql, bcmath, exif
+    
+    - name: Copy .env
+      run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+      working-directory: ./server
+    
+    - name: Install Dependencies
+      run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+      working-directory: ./server
+    
+    - name: Generate key
+      run: php artisan key:generate
+      working-directory: ./server
+    
+    - name: Directory Permissions
+      run: chmod -R 777 storage bootstrap/cache
+      working-directory: ./server
+    
+    - name: Run Migrations
+      run: php artisan migrate --force
+      working-directory: ./server
+      env:
+        DB_CONNECTION: pgsql
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_DATABASE: testing
+        DB_USERNAME: postgres
+        DB_PASSWORD: postgres
+    
+    - name: Run Tests
+      run: php artisan test
+      working-directory: ./server
+      env:
+        DB_CONNECTION: pgsql
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_DATABASE: testing
+        DB_USERNAME: postgres
+        DB_PASSWORD: postgres
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+    
+    - name: Install Frontend Dependencies
+      run: npm ci
+      working-directory: ./client
+    
+    - name: Build Frontend
+      run: npm run build
+      working-directory: ./client
+    
+    - name: Deploy to Production
+      uses: SamKirkland/FTP-Deploy-Action@4.3.0
+      with:
+        server: "${{ secrets.FTP_SERVER }}"
+        username: "${{ secrets.FTP_USERNAME }}"
+        password: "${{ secrets.FTP_PASSWORD }}"
+        local-dir: "./client/build/"
+        server-dir: "/public_html/"
