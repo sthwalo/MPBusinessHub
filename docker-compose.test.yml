@@ -27,7 +27,7 @@ services:
       - postgres
 
   postgres:
-    image: postgres:14
+    image: postgres:13
     environment:
       - POSTGRES_DB=testing
       - POSTGRES_USER=postgres
