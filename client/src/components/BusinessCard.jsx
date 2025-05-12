@@ -12,13 +12,14 @@ function BusinessCard({ business }) {
     Gold: 'bg-brand-gray-200 text-brand-black',
     Silver: 'bg-brand-gray-300 text-brand-black',
     Bronze: 'bg-brand-gray-500 text-brand-white',
-    Basic: 'bg-brand-gray-700 text-brand-white'
+    Basic: 'bg-brand-gray-700 text-brand-white',
+    Free: 'bg-brand-gray-700 text-brand-white' // Add support for 'Free' as an alias for Basic
   };
 
   // Function to determine what contact information is visible based on package tier
   const getVisibleContact = () => {
-    // Basic tier doesn't show contact info
-    if (package_type === 'Basic') {
+    // Basic/Free tier doesn't show contact info
+    if (package_type === 'Basic' || package_type === 'Free') {
       return null
     }
     
@@ -164,7 +165,7 @@ function BusinessCard({ business }) {
         
         {/* Package badge */}
         <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${tierBadgeStyles[package_type] || tierBadgeStyles.Basic}`}>
-          {package_type}
+          {package_type === 'Basic' ? 'Free' : package_type}
         </div>
         
         {/* Category badge */}
