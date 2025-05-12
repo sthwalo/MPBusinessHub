@@ -50,7 +50,36 @@ class BusinessPlanService
                 $billingCycle
             );
             
-            return $result;
+            // If payment processing failed, return the error
+            if (!$result['success']) {
+                return $result;
+            }
+            
+            // If there's a redirect URL, return it with all necessary data
+            if (isset($result['redirect_url'])) {
+                return [
+                    'success' => true,
+                    'redirect_url' => $result['redirect_url'],
+                    'payment_data' => $result['payment_data'] ?? null,
+                    'method' => $result['method'] ?? 'POST'
+                ];
+            }
+            
+            // Return the complete success response with all necessary data
+            return [
+                'success' => true,
+                'data' => [
+                    'business_id' => $business->id,
+                    'package_id' => $package->id,
+                    'package_name' => $package->name,
+                    'package_type' => $package->type,
+                    'billing_cycle' => $billingCycle,
+                    'transaction_id' => $result['transaction_id'] ?? null,
+                    'payment_id' => $result['payment_id'] ?? null,
+                    'amount' => $result['amount'] ?? null,
+                    'currency' => $result['currency'] ?? 'ZAR'
+                ]
+            ];
             
         } catch (\Exception $e) {
             Log::error('Error upgrading business plan: ' . $e->getMessage(), [

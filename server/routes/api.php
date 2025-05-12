@@ -57,12 +57,16 @@ Route::get('/test-verification-email/{email}', function($email) {
 
 // Protected business routes
 Route::middleware('auth:sanctum')->group(function () {
+    // Business details and profile management
     Route::get('/business/details', [BusinessController::class, 'getBusinessDetails']);
     Route::post('/business/update', [BusinessController::class, 'updateBusinessProfile']);
+    
+    // Business plan management
+    Route::post('/businesses/upgrade-plan', [BusinessController::class, 'upgradePlan']);
+    
+    // Business administration
     Route::delete('/business/remove-all', [BusinessController::class, 'removeAllBusinesses']); // Admin route to remove all businesses
 });
-
-// This route has been replaced by the BusinessController check method above
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -120,9 +124,6 @@ Route::get('/businesses/{id}/products', function ($id) {
 // Package routes
 Route::get('/packages', [App\Http\Controllers\PackageController::class, 'index']);
 Route::middleware('auth:sanctum')->post('/packages/upgrade', [App\Http\Controllers\PackageController::class, 'upgrade']);
-
-// Business plan upgrade route
-Route::middleware('auth:sanctum')->post('/businesses/upgrade-plan', [App\Http\Controllers\BusinessController::class, 'upgradePlan']);
 
 // Business statistics tracking
 Route::post('/businesses/{id}/view', [BusinessController::class, 'incrementViewCount']);

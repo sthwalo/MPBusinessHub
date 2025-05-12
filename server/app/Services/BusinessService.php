@@ -84,7 +84,23 @@ class BusinessService
             // Format products
             $products = $this->formatProducts($business->products);
             
-            // Build the business data array
+            // Get package information if available
+            $packageData = null;
+            if ($business->package) {
+                $packageData = [
+                    'id' => $business->package->id,
+                    'name' => $business->package->name,
+                    'description' => $business->package->description,
+                    'price_monthly' => $business->package->monthly_price ?? 0,
+                    'price_annual' => $business->package->annual_price ?? 0,
+                    'advert_limit' => $business->package->advert_limit ?? 0,
+                    'product_limit' => $business->package->product_limit ?? 0,
+                    'features' => $business->package->features ?? [],
+                    'popular' => $business->package->popular ?? false
+                ];
+            }
+            
+            // Build the business data array in the format expected by the frontend
             $businessData = [
                 'success' => true,
                 'data' => [
@@ -93,27 +109,31 @@ class BusinessService
                     'category' => $business->category,
                     'district' => $business->district,
                     'description' => $business->description,
-                    'package_type' => $business->package ? $business->package->type : 'Basic',
-                    'package_name' => $business->package ? $business->package->name : 'Basic',
-                    'status' => $business->status,
+                    'address' => $business->address,
+                    'phone' => $business->phone,
+                    'email' => $business->user->email,
+                    'website' => $business->website,
+                    'package_id' => $business->package_id,
+                    'package_type' => $business->package_type ?? ($business->package ? $business->package->name : 'Basic'),
+                    'package' => $packageData, // Add the package data
                     'adverts_remaining' => $business->adverts_remaining ?? 0,
+                    'billing_cycle' => $business->billing_cycle ?? 'monthly',
+                    'subscription_ends_at' => $business->subscription_ends_at ?? null,
                     'social_features_remaining' => $business->social_features_remaining ?? 0,
                     'rating' => round($averageRating, 1),
                     'review_count' => $reviewCount,
-                    'view_count' => $business->view_count ?? 0,
-                    'contact_count' => $business->contact_count ?? 0,
-                    'contact' => [
-                        'phone' => $business->phone,
-                        'email' => $business->user->email,
-                        'website' => $business->website,
-                        'address' => $business->address,
-                        'whatsapp' => $business->phone, // Using phone as WhatsApp for now
-                        'social_media' => $business->social_media ?? []
+                    'views' => $business->view_count ?? 0,
+                    'contacts' => $business->contact_count ?? 0,
+                    'statistics' => [
+                        'views' => $business->view_count ?? 0,
+                        'contacts' => $business->contact_count ?? 0,
+                        'reviews' => $reviewCount
                     ],
-                    'hours' => $operatingHours,
+                    'operatingHours' => $operatingHours,
+                    'image_url' => $business->image_url,
+                    'social_media' => $business->social_media ?? [],
                     'products' => $products,
-                    'reviews' => $formattedReviews,
-                    'images' => []
+                    'reviews' => $formattedReviews
                 ]
             ];
             

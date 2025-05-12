@@ -90,7 +90,11 @@ class BusinessController extends Controller
             ], 500);
         }
         
-        return response()->json($result['data']);
+        // Return the data in the format expected by the frontend
+        return response()->json([
+            'status' => 'success',
+            'data' => $result['data']
+        ]);
     }
 
     /**
@@ -301,7 +305,7 @@ class BusinessController extends Controller
                 ], 422);
             }
             
-            // Process the plan upgrade
+            // Process the plan upgrade using the BusinessPlanService
             $result = $this->planService->upgradePlan(
                 $business,
                 $request->package_id,
@@ -309,6 +313,7 @@ class BusinessController extends Controller
                 $request->billing_cycle
             );
             
+            // Return the result directly from the service
             if (!$result['success']) {
                 return response()->json([
                     'status' => 'error',
@@ -328,15 +333,13 @@ class BusinessController extends Controller
                 ]);
             }
             
-            // Return the updated business details
+            // Return the success response
             return response()->json([
                 'status' => 'success',
                 'message' => 'Business plan upgraded successfully',
-                'data' => [
+                'data' => $result['data'] ?? [
                     'business_id' => $business->id,
                     'package_id' => $request->package_id,
-                    'package_name' => $result['package_name'] ?? null,
-                    'package_type' => $result['package_type'] ?? null,
                     'billing_cycle' => $request->billing_cycle,
                     'transaction_id' => $result['transaction_id'] ?? null,
                     'payment_id' => $result['payment_id'] ?? null
