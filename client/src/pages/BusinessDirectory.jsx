@@ -42,28 +42,31 @@ function BusinessDirectory() {
         
         const data = await response.json()
         
-        // Transform the data to match the expected format
-        const transformedData = data.businesses.map(business => ({
-          id: business.id,
-          name: business.name,
-          category: business.category,
-          district: business.district,
-          description: business.description,
-          package_type: business.package_type, // Use the actual package type from the backend
-          rating: business.rating, // Use the actual rating from the backend
-          review_count: business.review_count, // Use the actual review count from the backend
-          contact: {
-            phone: business.phone,
-            email: business.user ? business.user.email : null,
-            website: business.website,
-            address: business.address
-          },
-          image_url: business.image_url
-        }));
-        
-        // Update state with fetched data
-        setBusinesses(transformedData)
-        setFilteredBusinesses(transformedData)
+        if (data.status === 'success' && data.data) {
+          // Transform the data to match the expected format if needed
+          const transformedData = data.data.map(business => ({
+            id: business.id,
+            name: business.name,
+            category: business.category,
+            district: business.district,
+            description: business.description,
+            package_type: business.package_type, // Use the actual package type from the backend
+            rating: business.rating, // Use the actual rating from the backend
+            review_count: business.review_count || 0, // Use the actual review count from the backend
+            contact: business.contact || {
+              phone: business.phone,
+              email: business.user ? business.user.email : null,
+              website: business.website,
+              address: business.address
+            },
+            image_url: business.image_url
+          }));
+          // Update state with fetched data
+          setBusinesses(transformedData)
+          setFilteredBusinesses(transformedData)
+        } else {
+          throw new Error(data.message || 'Failed to fetch businesses')
+        }
         
       } catch (err) {
         // Log error for debugging

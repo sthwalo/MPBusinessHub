@@ -106,31 +106,9 @@ function Dashboard() {
         // Parse the response data
         const result = await response.json();
         
-        if (result.status === 'success') {
-          // Get payment simulation data if it exists
-          const paymentSimulation = localStorage.getItem('simulatedPaymentData') 
-            ? JSON.parse(localStorage.getItem('simulatedPaymentData'))
-            : {
-                status: 'active',
-                next_billing_date: '2025-05-01',
-                amount: 0
-              };
-
-          // Use actual business data from the database, only simulate payment data
-          const businessDataWithSimulatedPayment = {
-            // Use all actual business data from the database
-            ...result.data,
-            // Only simulate subscription data
-            subscription: paymentSimulation,
-            // Ensure statistics are properly structured
-            statistics: {
-              views: result.data.views || 0,
-              contacts: result.data.contacts || 0,
-              reviews: result.data.review_count || 0
-            }
-          };
-          
-          setBusinessData(businessDataWithSimulatedPayment);
+        if (result.status === 'success' && result.data) {
+          // Use the actual business data from the API response
+          setBusinessData(result.data);
         } else {
           throw new Error(result.message || 'Failed to fetch business data');
         }
