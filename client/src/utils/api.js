@@ -20,6 +20,7 @@ const api = axios.create({
 // Request interceptor for auth token
 api.interceptors.request.use(
   config => {
+    console.log('Making API request to:', config.url);
     const token = localStorage.getItem('mpbh_token');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
@@ -211,6 +212,8 @@ export const productsApi = {
 if (process.env.NODE_ENV === 'development') {
   api.interceptors.request.use(request => {
     console.log('Starting Request', request);
+    console.log('Request URL:', request.url); 
+    console.log('Full URL:', request.baseURL + request.url); 
     return request;
   });
 
