@@ -1,83 +1,88 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 
 function UpgradePlan({ businessData, onUpgrade }) {
-  const [selectedPlan, setSelectedPlan] = useState(businessData.package_type)
+  const [selectedPlan, setSelectedPlan] = useState(null)
   const [billingCycle, setBillingCycle] = useState('monthly')
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [error, setError] = useState('')
   const [packages, setPackages] = useState([])
+  const [isLoadingPackages, setIsLoadingPackages] = useState(true)
 
   // Fetch packages from API when component mounts
   useEffect(() => {
     const fetchPackages = async () => {
+      setIsLoadingPackages(true)
+      setError('') // Clear any previous errors
+      
       try {
+        // Make the API request to get packages from the database
         const response = await fetch('/api/packages')
-        const data = await response.json()
         
-        if (data.status === 'success') {
-          setPackages(data.data)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch packages: ${response.status} ${response.statusText}`)
+        }
+        
+        const data = await response.json()
+        console.log('Package API response:', data) // Debug the API response structure
+        
+        // Handle different API response formats but always use data from API
+        let packagesData = [];
+        
+        if (Array.isArray(data)) {
+          // Case 1: API directly returns an array of packages
+          packagesData = data;
+        } else if (data && typeof data === 'object') {
+          // Case 2: API returns an object with a data property containing packages
+          if (Array.isArray(data.data)) {
+            packagesData = data.data;
+          } else if (data.packages && Array.isArray(data.packages)) {
+            // Case 3: API returns an object with a packages property
+            packagesData = data.packages;
+          }
+        }
+        
+        if (packagesData.length === 0) {
+          throw new Error('No packages found in the database. Please contact the administrator.');
+        }
+        
+        setPackages(packagesData);
+        
+        // Set the current package as selected by default
+        if (businessData && businessData.package_type) {
+          const currentPackage = packagesData.find(p => p.name === businessData.package_type);
+          if (currentPackage) {
+            setSelectedPlan(currentPackage.name);
+          } else {
+            // If current package not found in API response, select the first one
+            setSelectedPlan(packagesData[0].name);
+          }
+        } else {
+          // If no current package, select the first one
+          setSelectedPlan(packagesData[0].name);
         }
       } catch (error) {
-        console.error('Error fetching packages:', error)
-        setError('Failed to load packages. Please try again later.')
+        console.error('Error fetching packages:', error);
+        setError(`Failed to load packages from database: ${error.message}. Please try refreshing the page or contact support.`);
+        // Do not set any packages if the API fails - show the error instead
+        setPackages([]);
+      } finally {
+        setIsLoadingPackages(false);
       }
-    }
+    };
     
-    fetchPackages()
-  }, [])
-
-  // If we don't have packages yet, use these as fallback
-  const fallbackPackages = [
-    {
-      id: 1,
-      name: 'Basic',
-      price_monthly: 0,
-      price_annual: 0,
-      advert_limit: 0,
-      product_limit: 0,
-      features: ['Basic listing', 'Business hours']
-    },
-    {
-      id: 2,
-      name: 'Bronze',
-      price_monthly: 200,
-      price_annual: 2000,
-      advert_limit: 0,
-      product_limit: 0,
-      features: ['Basic listing', 'Business hours', 'Contact information']
-    },
-    {
-      id: 3,
-      name: 'Silver',
-      price_monthly: 500,
-      price_annual: 5000,
-      advert_limit: 2,
-      product_limit: 10,
-      features: ['Basic listing', 'Business hours', 'Contact information', 'Products showcase', '2 monthly adverts']
-    },
-    {
-      id: 4,
-      name: 'Gold',
-      price_monthly: 1000,
-      price_annual: 10000,
-      advert_limit: 4,
-      product_limit: 50,
-      features: ['Basic listing', 'Business hours', 'Contact information', 'Products showcase', '4 monthly adverts', 'Featured listing']
-    }
-  ]
-
-  // Use API packages or fallback if API hasn't loaded yet
-  const displayPackages = packages.length > 0 ? packages : fallbackPackages
+    fetchPackages();
+  }, [businessData]);
 
   // Format packages for display
-  const formattedPackages = displayPackages.map(pkg => ({
+  const formattedPackages = packages.map(pkg => ({
     id: pkg.id,
     name: pkg.name,
     monthlyPrice: pkg.price_monthly,
     annualPrice: pkg.price_annual,
-    price_monthly: pkg.price_monthly,  // Keep original for calculations
-    price_annual: pkg.price_annual,    // Keep original for calculations
+    price_monthly: pkg.price_monthly,
+    price_annual: pkg.price_annual,
     popular: pkg.name === 'Silver',
     features: [
       { name: 'Listing Visibility', included: true },
@@ -89,7 +94,7 @@ function UpgradePlan({ businessData, onUpgrade }) {
 
   const handlePlanChange = (planId) => {
     // Find the package with this ID
-    const selectedPackage = displayPackages.find(p => p.id === planId)
+    const selectedPackage = packages.find(p => p.id === planId)
     if (selectedPackage) {
       setSelectedPlan(selectedPackage.name)
       // Reset success message if any
@@ -131,7 +136,7 @@ function UpgradePlan({ businessData, onUpgrade }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (isCurrentPlan()) return
+    if (isCurrentPlan() || !selectedPlan) return
     
     setIsLoading(true)
     setError('')
@@ -139,10 +144,10 @@ function UpgradePlan({ businessData, onUpgrade }) {
     
     try {
       // Get the package ID based on the selected plan name
-      const selectedPackage = displayPackages.find(p => p.name === selectedPlan)
+      const selectedPackage = packages.find(p => p.name === selectedPlan)
       
       if (!selectedPackage) {
-        throw new Error('Selected package not found')
+        throw new Error('Selected package not found in available packages')
       }
       
       // Call the API to upgrade the package
@@ -158,10 +163,15 @@ function UpgradePlan({ businessData, onUpgrade }) {
         })
       })
       
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || `Server returned ${response.status}: ${response.statusText}`)
+      }
+      
       const data = await response.json()
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to upgrade package')
+      if (data.status !== 'success') {
+        throw new Error(data.message || 'Unknown error occurred')
       }
       
       // Update the business data with the response from the server
@@ -188,10 +198,52 @@ function UpgradePlan({ businessData, onUpgrade }) {
       setSuccessMessage(`Successfully ${isUpgrade() ? 'upgraded' : 'changed'} to ${selectedPlan} plan!`)
     } catch (error) {
       console.error('Error upgrading package:', error)
-      setError(error.message || 'An error occurred while upgrading your package')
+      setError(error.message || 'An error occurred while upgrading your package. Please try again later.')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Show loading state while packages are being fetched
+  if (isLoadingPackages) {
+    return (
+      <div className="p-6 text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-black mx-auto mb-4"></div>
+        <p className="text-brand-gray-600">Loading package information...</p>
+      </div>
+    )
+  }
+
+  // Show error state if packages couldn't be loaded
+  if (error && packages.length === 0) {
+    return (
+      <div className="p-6 bg-red-50 border border-red-200 rounded-lg">
+        <h2 className="text-xl font-bold text-red-700 mb-2">Error Loading Packages</h2>
+        <p className="text-red-600 mb-4">{error}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-brand-black text-brand-white rounded-md hover:bg-brand-gray-800 transition-colors"
+        >
+          Refresh Page
+        </button>
+      </div>
+    )
+  }
+
+  // If no packages available, show a message
+  if (packages.length === 0) {
+    return (
+      <div className="p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <h2 className="text-xl font-bold text-yellow-700 mb-2">No Packages Available</h2>
+        <p className="text-yellow-600 mb-4">There are currently no packages available. Please check back later.</p>
+        <Link 
+          to="/dashboard"
+          className="px-4 py-2 bg-brand-black text-brand-white rounded-md hover:bg-brand-gray-800 transition-colors inline-block"
+        >
+          Return to Dashboard
+        </Link>
+      </div>
+    )
   }
 
   return (

@@ -77,76 +77,108 @@ class BusinessController extends Controller
      */
     public function getBusinessDetails(Request $request): JsonResponse
     {
-        // Get the authenticated user
-        $user = Auth::user();
-        
-        // Find the business associated with the user
-        $business = Business::where('user_id', $user->id)->with('operatingHours')->first();
-        
-        if (!$business) {
+        try {
+            Log::info('Fetching business details for authenticated user');
+            
+            // Get the authenticated user
+            $user = Auth::user();
+            
+            // Find the business associated with the user
+            $business = Business::where('user_id', $user->id)
+                ->with(['operatingHours', 'package', 'reviews', 'products'])
+                ->first();
+            
+            if (!$business) {
+                Log::warning('No business found for user', ['user_id' => $user->id]);
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Business not found'
+                ], 404);
+            }
+            
+            // Format operating hours
+            $operatingHours = [];
+            $daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            
+            // Initialize with default closed values
+            foreach ($daysOfWeek as $day) {
+                $operatingHours[$day] = 'Closed';
+            }
+            
+            // Override with actual values from database
+            foreach ($business->operatingHours as $hours) {
+                if (!$hours->is_closed && $hours->opening_time && $hours->closing_time) {
+                    $operatingHours[$hours->day_of_week] = $hours->opening_time . ' - ' . $hours->closing_time;
+                }
+            }
+            
+            // Calculate average rating if reviews exist
+            $averageRating = $business->reviews->count() > 0 
+                ? $business->reviews->avg('rating') 
+                : 0;
+                
+            // Get package information if available
+            $packageData = null;
+            if ($business->package) {
+                $packageData = [
+                    'id' => $business->package->id,
+                    'name' => $business->package->name,
+                    'description' => $business->package->description,
+                    'price_monthly' => $business->package->price_monthly,
+                    'price_annual' => $business->package->price_annual,
+                    'advert_limit' => $business->package->advert_limit,
+                    'product_limit' => $business->package->product_limit,
+                    'features' => $business->package->features,
+                    'popular' => $business->package->popular ?? false
+                ];
+            }
+            
+            // Transform business data to match client's expected format
+            // KEEPING ALL ORIGINAL FIELDS while adding package relationship
+            $businessData = [
+                'id' => $business->id,
+                'name' => $business->name,
+                'category' => $business->category,
+                'district' => $business->district,
+                'description' => $business->description,
+                'address' => $business->address,
+                'phone' => $business->phone,
+                'email' => $user->email,
+                'website' => $business->website,
+                'package_id' => $business->package_id,
+                'package_type' => $business->package_type ?? ($business->package ? $business->package->name : 'Basic'),
+                'package' => $packageData, // Add the package data
+                'adverts_remaining' => $business->adverts_remaining ?? 0,
+                'billing_cycle' => $business->billing_cycle ?? 'monthly',
+                'subscription_ends_at' => $business->subscription_ends_at ?? null,
+                'social_features_remaining' => $business->social_features_remaining ?? 0,
+                'rating' => $averageRating,
+                'review_count' => $business->reviews->count(),
+                'subscription' => [
+                    'status' => 'active',
+                    'next_billing_date' => date('Y-m-d', strtotime('+30 days')),
+                    'amount' => 0
+                ],
+                'statistics' => [
+                    'views' => $business->view_count ?? 0,
+                    'contacts' => $business->contact_count ?? 0,
+                    'reviews' => $business->reviews->count()
+                ],
+                'operatingHours' => $operatingHours,
+                'image_url' => $business->image_url
+            ];
+            
+            return response()->json([
+                'status' => 'success',
+                'data' => $businessData
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching business details: ' . $e->getMessage());
             return response()->json([
                 'status' => 'error',
-                'message' => 'Business not found'
-            ], 404);
+                'message' => 'An error occurred while fetching business details: ' . $e->getMessage()
+            ], 500);
         }
-        
-        // Format operating hours
-        $operatingHours = [];
-        $daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-        
-        // Initialize with default closed values
-        foreach ($daysOfWeek as $day) {
-            $operatingHours[$day] = 'Closed';
-        }
-        
-        // Override with actual values from database
-        foreach ($business->operatingHours as $hours) {
-            if (!$hours->is_closed && $hours->opening_time && $hours->closing_time) {
-                $operatingHours[$hours->day_of_week] = $hours->opening_time . ' - ' . $hours->closing_time;
-            }
-        }
-        
-        // Calculate average rating if reviews exist
-        $averageRating = $business->reviews->count() > 0 
-            ? $business->reviews->avg('rating') 
-            : 0;
-            
-        // Transform business data to match client's expected format
-        $businessData = [
-            'id' => $business->id,
-            'name' => $business->name,
-            'category' => $business->category,
-            'district' => $business->district,
-            'description' => $business->description,
-            'address' => $business->address,
-            'phone' => $business->phone,
-            'email' => $user->email,
-            'website' => $business->website,
-            'package_type' => $business->package_type ?? 'Basic',
-            'adverts_remaining' => $business->adverts_remaining ?? 0,
-            'billing_cycle' => $business->billing_cycle ?? 'monthly',
-            'subscription_ends_at' => $business->subscription_ends_at ?? null,
-            'social_features_remaining' => $business->social_features_remaining ?? 0,
-            'rating' => $averageRating,
-            'review_count' => $business->reviews->count(),
-            'subscription' => [
-                'status' => 'active',
-                'next_billing_date' => date('Y-m-d', strtotime('+30 days')),
-                'amount' => 0
-            ],
-            'statistics' => [
-                'views' => $business->view_count ?? 0,
-                'contacts' => $business->contact_count ?? 0,
-                'reviews' => $business->reviews->count()
-            ],
-            'operatingHours' => $operatingHours,
-            'image_url' => $business->image_url
-        ];
-        
-        return response()->json([
-            'status' => 'success',
-            'data' => $businessData
-        ]);
     }
 
     /**
@@ -362,10 +394,17 @@ class BusinessController extends Controller
         
         // Transform businesses to match the client's expected format
         $transformedBusinesses = $businesses->map(function ($business) {
-            // Calculate average rating from approved reviews
-            $averageRating = $business->reviews()
-                ->where('is_approved', true)
-                ->avg('rating');
+            // Safely calculate average rating from approved reviews
+            $averageRating = null;
+            if (method_exists($business, 'reviews')) {
+                try {
+                    $averageRating = $business->reviews()
+                        ->where('is_approved', true)
+                        ->avg('rating');
+                } catch (Exception $e) {
+                    // Silently handle the error and keep null rating
+                }
+            }
             
             return [
                 'id' => $business->id,
@@ -382,7 +421,6 @@ class BusinessController extends Controller
                     'website' => $business->website,
                     'address' => $business->address,
                     'social_media' => $business->social_media ?? []
-
                 ],
                 'image_url' => $business->image_url // Use the actual image URL from the database
             ];

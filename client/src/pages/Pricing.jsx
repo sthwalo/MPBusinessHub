@@ -1,103 +1,191 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
 function Pricing() {
   const [billingPeriod, setBillingPeriod] = useState('monthly')
+  const [packages, setPackages] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
   const navigate = useNavigate()
-  const isAuthenticated = localStorage.getItem('token') ? true : false
+  const isAuthenticated = localStorage.getItem('mpbh_token') ? true : false
 
-  // Pricing data based on the membership tiers from your project
-  const plans = [
-    {
-      name: 'Basic',
-      price: { monthly: 0, yearly: 0 },
-      description: 'Get started with a basic business listing',
-      features: [
-        'Business Name Listing',
-        'Area of Operation',
-        'Basic Search Visibility',
-        'Business Category',
+  // Fetch packages from API when component mounts
+  useEffect(() => {
+    const fetchPackages = async () => {
+      setIsLoading(true)
+      try {
+        const response = await fetch('/api/packages')
         
-      ],
-      limitations: [
-        'No contact information displayed',
-        'No ratings or reviews',
-        'No website links',
-        'No product catalog',
-        'No monthly adverts',
-        'No social media features'
-      ],
-      buttonText: 'Get Started Free',
-      recommended: false,
-      color: 'brand-gray-700'
-    },
-    {
-      name: 'Bronze',
-      price: { monthly: 200, yearly: 2000 },
-      description: 'Enhance your visibility with contact details',
-      features: [
-        'All Basic features',
-        'Website Link',
-        'WhatsApp Number',
-        'Star Ratings',
-        'Contact Information Display',
-        'Enhanced Search Visibility',
-        'Basic Product Catalog (up to 5 items)',
-        '1 Monthly Advert',
-        'No Social Media Features'
-      ],
-      limitations: [
-        'No email contact',
-        'Limited product catalog',
-        'Limited adverts'
-      ],
-      buttonText: 'Upgrade to Bronze',
-      recommended: false,
-      color: 'brand-gray-500'
-    },
-    {
-      name: 'Silver',
-      price: { monthly: 500, yearly: 5000 },
-      description: 'Showcase your products and get more exposure',
-      features: [
-        'All Bronze features',
-        'Email Contact',
-        'Standard Product Catalog (up to 20 items)',
-        '2 Monthly Adverts',
-        'Priority in Search Results',
-        'Customer Reviews',
-        'Social Media Feature (1 per month)'
-      ],
-      limitations: [
-        'Limited product catalog',
-        'Limited adverts'
-      ],
-      buttonText: 'Upgrade to Silver',
-      recommended: true,
-      color: 'brand-gray-300'
-    },
-    {
-      name: 'Gold',
-      price: { monthly: 1000, yearly: 10000 },
-      description: 'Maximum visibility and premium features',
-      features: [
-        'All Silver features',
-        'Unlimited Product Catalog',
-        '4 Monthly Adverts',
-        '2 Social Media Features per month',
-        'Featured Business Status',
-        'Top Position in Search Results',
-        'Premium Support',
-        'No Limitations'
-      ],
-      limitations: [],
-      buttonText: 'Upgrade to Gold',
-      recommended: false,
-      color: 'brand-gray-200'
+        if (!response.ok) {
+          throw new Error(`Failed to fetch packages: ${response.status} ${response.statusText}`)
+        }
+        
+        const data = await response.json()
+        
+        if (data.status === 'success' && Array.isArray(data.data) && data.data.length > 0) {
+          setPackages(data.data)
+        } else {
+          throw new Error('Invalid package data received from server')
+        }
+      } catch (error) {
+        console.error('Error fetching packages:', error)
+        setError(`Failed to load packages: ${error.message}. Please try refreshing the page.`)
+      } finally {
+        setIsLoading(false)
+      }
     }
-  ]
+    
+    fetchPackages()
+  }, [])
+
+  // Format packages for display
+  const formatPackages = () => {
+    return packages.map(pkg => ({
+      id: pkg.id,
+      name: pkg.name,
+      price: { 
+        monthly: pkg.price_monthly, 
+        yearly: pkg.price_annual 
+      },
+      description: pkg.description || getDefaultDescription(pkg.name),
+      features: getPackageFeatures(pkg),
+      limitations: getPackageLimitations(pkg),
+      buttonText: `Upgrade to ${pkg.name}`,
+      recommended: pkg.name === 'Silver',
+      color: getPackageColor(pkg.name)
+    }))
+  }
+
+  // Get default description if not provided by API
+  const getDefaultDescription = (packageName) => {
+    switch (packageName) {
+      case 'Basic': return 'Get started with a basic business listing'
+      case 'Bronze': return 'Enhance your visibility with contact details'
+      case 'Silver': return 'Showcase your products and get more exposure'
+      case 'Gold': return 'Maximum visibility and premium features'
+      default: return 'Choose the right plan for your business'
+    }
+  }
+
+  // Get features based on package name and properties
+  const getPackageFeatures = (pkg) => {
+    const baseFeatures = [
+      'Business Name Listing',
+      'Area of Operation',
+      'Basic Search Visibility',
+      'Business Category',
+    ]
+
+    const bronzeFeatures = [
+      'All Basic features',
+      'Website Link',
+      'WhatsApp Number',
+      'Star Ratings',
+      'Contact Information Display',
+      'Enhanced Search Visibility',
+    ]
+
+    const silverFeatures = [
+      'All Bronze features',
+      'Email Contact',
+      'Priority in Search Results',
+      'Customer Reviews',
+    ]
+
+    const goldFeatures = [
+      'All Silver features',
+      'Featured Business Status',
+      'Top Position in Search Results',
+      'Premium Support',
+    ]
+
+    // Add product catalog feature based on product_limit
+    const productFeature = getProductFeature(pkg.product_limit)
+    
+    // Add advert feature based on advert_limit
+    const advertFeature = getAdvertFeature(pkg.advert_limit)
+    
+    // Add social media feature
+    const socialFeature = getSocialFeature(pkg.name)
+
+    switch (pkg.name) {
+      case 'Basic':
+        return [...baseFeatures]
+      case 'Bronze':
+        return [...bronzeFeatures, productFeature, advertFeature]
+      case 'Silver':
+        return [...silverFeatures, productFeature, advertFeature, socialFeature]
+      case 'Gold':
+        return [...goldFeatures, 'Unlimited Product Catalog', advertFeature, socialFeature, 'No Limitations']
+      default:
+        return baseFeatures
+    }
+  }
+
+  // Get product feature text based on limit
+  const getProductFeature = (limit) => {
+    if (!limit || limit === 0) return 'No Product Catalog'
+    if (limit < 10) return `Basic Product Catalog (up to ${limit} items)`
+    if (limit < 50) return `Standard Product Catalog (up to ${limit} items)`
+    return 'Unlimited Product Catalog'
+  }
+
+  // Get advert feature text based on limit
+  const getAdvertFeature = (limit) => {
+    if (!limit || limit === 0) return 'No Monthly Adverts'
+    return `${limit} Monthly Advert${limit > 1 ? 's' : ''}`
+  }
+
+  // Get social media feature text based on package
+  const getSocialFeature = (packageName) => {
+    switch (packageName) {
+      case 'Silver': return 'Social Media Feature (1 per month)'
+      case 'Gold': return '2 Social Media Features per month'
+      default: return 'No Social Media Features'
+    }
+  }
+
+  // Get limitations based on package name
+  const getPackageLimitations = (pkg) => {
+    switch (pkg.name) {
+      case 'Basic':
+        return [
+          'No contact information displayed',
+          'No ratings or reviews',
+          'No website links',
+          'No product catalog',
+          'No monthly adverts',
+          'No social media features'
+        ]
+      case 'Bronze':
+        return [
+          'No email contact',
+          'Limited product catalog',
+          'Limited adverts'
+        ]
+      case 'Silver':
+        return [
+          'Limited product catalog',
+          'Limited adverts'
+        ]
+      case 'Gold':
+        return []
+      default:
+        return []
+    }
+  }
+
+  // Get color based on package name
+  const getPackageColor = (packageName) => {
+    switch (packageName) {
+      case 'Basic': return 'brand-gray-700'
+      case 'Bronze': return 'brand-gray-500'
+      case 'Silver': return 'brand-gray-300'
+      case 'Gold': return 'brand-gray-200'
+      default: return 'brand-gray-500'
+    }
+  }
 
   const handleUpgrade = (plan) => {
     if (!isAuthenticated) {
@@ -106,15 +194,40 @@ function Pricing() {
       return
     }
     
-    // In a real implementation, this would redirect to a payment page
-    // or process the upgrade through an API
-    toast.success(`You selected the ${plan.name} plan. Redirecting to payment...`)
-    
-    // For demo purposes, just log the selection
-    console.log(`Selected plan: ${plan.name}, billing: ${billingPeriod}`)
-    
-    // In production, this would redirect to a payment gateway
-    // navigate('/payment', { state: { plan: plan.name, billing: billingPeriod } })
+    // Redirect to dashboard upgrade page
+    navigate('/dashboard/upgrade')
+  }
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="bg-brand-gray-100 py-16 px-4 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-brand-black mx-auto mb-4"></div>
+          <p className="text-brand-gray-600 text-lg">Loading package information...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error && packages.length === 0) {
+    return (
+      <div className="bg-brand-gray-100 py-16 px-4 min-h-screen">
+        <div className="container mx-auto">
+          <div className="p-6 bg-red-50 border border-red-200 rounded-lg max-w-2xl mx-auto">
+            <h2 className="text-xl font-bold text-red-700 mb-2">Error Loading Packages</h2>
+            <p className="text-red-600 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-brand-black text-brand-white rounded-md hover:bg-brand-gray-800 transition-colors"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -158,7 +271,7 @@ function Pricing() {
 
         {/* Pricing cards */}
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8 mb-16">
-          {plans.map((plan) => (
+          {formatPackages().map((plan) => (
             <div 
               key={plan.name}
               className={`rounded-lg shadow-brand-md hover:shadow-brand-lg overflow-hidden bg-brand-white border border-brand-gray-200 transform transition-all duration-200 hover:-translate-y-1 ${

@@ -18,7 +18,8 @@ class Package extends Model
         'advert_limit',
         'product_limit',
         'features',
-        'is_active'
+        'is_active',
+        'popular'
     ];
 
     protected $casts = [
@@ -27,7 +28,8 @@ class Package extends Model
         'advert_limit' => 'integer',
         'product_limit' => 'integer',
         'features' => 'array',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
+        'popular' => 'boolean'
     ];
 
     /**

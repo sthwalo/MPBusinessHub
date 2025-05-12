@@ -57,13 +57,6 @@ function Dashboard() {
     // Fetch the user's business data from our API
     const fetchBusinessData = async () => {
       try {
-        // Check for simulated data first
-        const simulatedData = localStorage.getItem('simulatedBusinessData');
-        if (simulatedData) {
-          setBusinessData(JSON.parse(simulatedData));
-          return;
-        }
-
         // Get the auth token from localStorage
         const token = localStorage.getItem('mpbh_token');
         if (!token) {
@@ -113,42 +106,33 @@ function Dashboard() {
         // Parse the response data
         const result = await response.json();
         
-        if (result.status === 'success' && result.data) {
-          // Transform the API data to match our component's expected format
-          const businessData = {
-            id: result.data.id,
-            name: result.data.name,
-            category: result.data.category,
-            district: result.data.district,
-            description: result.data.description,
-            address: result.data.address,
-            phone: result.data.phone,
-            email: result.data.email,
-            website: result.data.website,
-            package_type: result.data.package_type || 'Basic',
-            adverts_remaining: result.data.adverts_remaining || 0,
-            rating: result.data.rating || 0,
-            subscription: {
-              status: 'active',
-              next_billing_date: '2025-05-01',
-              amount: 0
-            },
+        if (result.status === 'success') {
+          // Get payment simulation data if it exists
+          const paymentSimulation = localStorage.getItem('simulatedPaymentData') 
+            ? JSON.parse(localStorage.getItem('simulatedPaymentData'))
+            : {
+                status: 'active',
+                next_billing_date: '2025-05-01',
+                amount: 0
+              };
+
+          // Use actual business data from the database, only simulate payment data
+          const businessDataWithSimulatedPayment = {
+            // Use all actual business data from the database
+            ...result.data,
+            // Only simulate subscription data
+            subscription: paymentSimulation,
+            // Ensure statistics are properly structured
             statistics: {
-              views: result.data.statistics?.views || 0,
-              contacts: result.data.statistics?.contacts || 0,
+              views: result.data.views || 0,
+              contacts: result.data.contacts || 0,
               reviews: result.data.review_count || 0
             }
           };
           
-          setBusinessData(businessData);
+          setBusinessData(businessDataWithSimulatedPayment);
         } else {
-          // If our API returned an error or no data
-          console.error('API returned an error:', result);
-          
-          // Show error message and redirect to login
-          console.error('API returned an error:', result);
-          localStorage.removeItem('mpbh_token');
-          navigate('/login');
+          throw new Error(result.message || 'Failed to fetch business data');
         }
       } catch (error) {
         console.error('Error fetching business data:', error);

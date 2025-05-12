@@ -111,7 +111,12 @@ function BusinessProfile({ businessData, updateBusinessData }) {
           email: formData.email,
           website: formData.website,
           address: formData.address,
-          image_url: businessImage
+          image_url: businessImage,
+          package_type: businessData.package_type || 'Basic',
+          adverts_remaining: businessData.adverts_remaining || 0,
+          social_features_remaining: businessData.social_features_remaining || 0,
+          billing_cycle: businessData.billing_cycle || 'monthly',
+          subscription_ends_at: businessData.subscription_ends_at || new Date().toISOString().split('T')[0]
         })
       });
       

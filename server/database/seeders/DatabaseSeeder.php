@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Log;
 
 class DatabaseSeeder extends Seeder
 {
@@ -13,14 +14,20 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        Log::info('Starting database seeding');
+        
         // User::factory(10)->create();
 
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+        
+        Log::info('Running package seeders');
         $this->call([
-            PackageSeeder::class,
+            PackagesTableSeeder::class, // Use the updated seeder
         ]);
+        
+        Log::info('Database seeding completed');
     }
 }
