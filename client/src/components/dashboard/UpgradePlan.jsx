@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import api from '../../utils/api'
 
 function UpgradePlan({ businessData, onUpgrade }) {
   const [selectedPlan, setSelectedPlan] = useState(null)
@@ -17,29 +18,25 @@ function UpgradePlan({ businessData, onUpgrade }) {
       setError('') // Clear any previous errors
       
       try {
-        // Make the API request to get packages from the database
-        const response = await fetch('/api/packages')
+        // Make the API request to get packages from the database using the axios instance
+        const response = await api.get('/packages')
         
-        if (!response.ok) {
-          throw new Error(`Failed to fetch packages: ${response.status} ${response.statusText}`)
-        }
-        
-        const data = await response.json()
-        console.log('Package API response:', data) // Debug the API response structure
+        // The api.js interceptor already handles JSON parsing and error checking
+        console.log('Package API response:', response) // Debug the API response structure
         
         // Handle different API response formats but always use data from API
         let packagesData = [];
         
-        if (Array.isArray(data)) {
+        if (Array.isArray(response.data)) {
           // Case 1: API directly returns an array of packages
-          packagesData = data;
-        } else if (data && typeof data === 'object') {
+          packagesData = response.data;
+        } else if (response.data && typeof response.data === 'object') {
           // Case 2: API returns an object with a data property containing packages
-          if (Array.isArray(data.data)) {
-            packagesData = data.data;
-          } else if (data.packages && Array.isArray(data.packages)) {
+          if (Array.isArray(response.data.data)) {
+            packagesData = response.data.data;
+          } else if (response.data.packages && Array.isArray(response.data.packages)) {
             // Case 3: API returns an object with a packages property
-            packagesData = data.packages;
+            packagesData = response.data.packages;
           }
         }
         
@@ -150,25 +147,17 @@ function UpgradePlan({ businessData, onUpgrade }) {
         throw new Error('Selected package not found in available packages')
       }
       
-      // Call the API to upgrade the package
-      const response = await fetch('/api/packages/upgrade', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('mpbh_token')}`
-        },
-        body: JSON.stringify({
-          package_id: selectedPackage.id,
-          billing_cycle: billingCycle
-        })
+      // Call the API to upgrade the package using the axios instance
+      const response = await api.post('/packages/upgrade', {
+        package_id: selectedPackage.id,
+        billing_cycle: billingCycle
       })
       
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || `Server returned ${response.status}: ${response.statusText}`)
+      if (response.status !== 200) {
+        throw new Error(response.data.message || `Server returned ${response.status}: ${response.statusText}`)
       }
       
-      const data = await response.json()
+      const data = response.data
       
       if (data.status !== 'success') {
         throw new Error(data.message || 'Unknown error occurred')

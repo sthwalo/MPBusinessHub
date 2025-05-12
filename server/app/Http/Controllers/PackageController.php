@@ -2,156 +2,174 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Business;
 use App\Models\Package;
+use App\Models\Business;
+use App\Services\PackageService;
+use App\Services\PaymentService;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log;
 
 class PackageController extends Controller
 {
+    protected $packageService;
+    protected $paymentService;
+
     /**
-     * Get all available packages
+     * Constructor
      */
-    public function index(): JsonResponse
+    public function __construct(PackageService $packageService, PaymentService $paymentService)
     {
-        try {
-            Log::info('Fetching all active packages');
-            $packages = Package::where('is_active', true)->get();
-            
-            if ($packages->isEmpty()) {
-                Log::warning('No active packages found in the database');
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'No active packages found'
-                ], 404);
-            }
-            
-            Log::info('Successfully retrieved ' . $packages->count() . ' packages');
-            return response()->json([
-                'status' => 'success',
-                'data' => $packages
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error fetching packages: ' . $e->getMessage());
-            
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to retrieve packages: ' . $e->getMessage()
-            ], 500);
-        }
+        $this->packageService = $packageService;
+        $this->paymentService = $paymentService;
     }
-    
+
     /**
-     * Upgrade business package
+     * Get all packages
+     *
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function upgrade(Request $request): JsonResponse
+    public function index()
     {
-        try {
-            Log::info('Package upgrade request received', ['request_data' => $request->all()]);
-            
-            $validator = Validator::make($request->all(), [
-                'package_id' => 'required|exists:packages,id',
-                'billing_cycle' => 'required|string|in:monthly,annual',
-            ]);
-            
-            if ($validator->fails()) {
-                Log::warning('Package upgrade validation failed', ['errors' => $validator->errors()->toArray()]);
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-            
-            $user = Auth::user();
-            Log::info('Processing package upgrade for user', ['user_id' => $user->id, 'email' => $user->email]);
-            
-            $business = Business::where('user_id', $user->id)->first();
-            
-            if (!$business) {
-                Log::warning('Business not found for user during package upgrade', ['user_id' => $user->id]);
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Business not found'
-                ], 404);
-            }
-            
-            $package = Package::findOrFail($request->package_id);
-            Log::info('Found package for upgrade', [
-                'package_id' => $package->id,
-                'package_name' => $package->name,
-                'business_id' => $business->id,
-                'billing_cycle' => $request->billing_cycle
-            ]);
-            
-            // Store previous values for logging
-            $previousPackageId = $business->package_id;
-            $previousBillingCycle = $business->billing_cycle;
-            
-            // Update business package
-            $business->package_id = $package->id;
-            $business->package_type = $package->name; // Make sure package_type is also updated
-            $business->billing_cycle = $request->billing_cycle;
-            $business->adverts_remaining = $package->advert_limit;
-            
-            // Set subscription end date (30 days for monthly, 365 days for annual)
-            $days = $request->billing_cycle === 'monthly' ? 30 : 365;
-            $business->subscription_ends_at = now()->addDays($days);
-            
-            // Set social features based on package
-            if ($package->name === 'Gold') {
-                $business->social_features_remaining = 2; // 2 social media features per month for Gold
-            } else if ($package->name === 'Silver') {
-                $business->social_features_remaining = 1; // 1 social media feature per month for Silver
-            } else {
-                $business->social_features_remaining = 0;
-            }
-            
-            $business->save();
-            
-            Log::info('Business package upgraded successfully', [
-                'business_id' => $business->id,
-                'previous_package_id' => $previousPackageId,
-                'new_package_id' => $package->id,
-                'previous_billing_cycle' => $previousBillingCycle,
-                'new_billing_cycle' => $request->billing_cycle,
-                'subscription_ends_at' => $business->subscription_ends_at
-            ]);
-            
-            // In a real implementation, I will handle payment processing here
-            // and only update the package after successful payment
-            
+        $packages = $this->packageService->getAllPackages();
+        
+        if ($packages->isEmpty()) {
             return response()->json([
-                'status' => 'success',
-                'message' => 'Package upgraded successfully',
-                'data' => [
-                    'package' => $package,
-                    'business' => [
-                        'id' => $business->id,
-                        'package_id' => $business->package_id,
-                        'package_type' => $business->package_type,
-                        'billing_cycle' => $business->billing_cycle,
-                        'subscription_ends_at' => $business->subscription_ends_at,
-                        'adverts_remaining' => $business->adverts_remaining,
-                        'social_features_remaining' => $business->social_features_remaining
-                    ]
-                ]
-           ]);
-        } catch (\Exception $e) {
-            Log::error('Error upgrading package: ' . $e->getMessage(), [
-                'exception' => get_class($e),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'request_data' => $request->all()
+                'status' => 'warning',
+                'message' => 'No packages found in the database',
+                'data' => []
             ]);
-            
+        }
+        
+        return response()->json([
+            'status' => 'success',
+            'data' => $packages
+        ]);
+    }
+
+    /**
+     * Get a specific package
+     *
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function show($id)
+    {
+        $package = $this->packageService->getPackageById($id);
+        
+        if (!$package) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'An error occurred while upgrading package: ' . $e->getMessage()
-            ], 500);
+                'message' => 'Package not found'
+            ], 404);
         }
+        
+        return response()->json([
+            'status' => 'success',
+            'data' => $package
+        ]);
+    }
+
+    /**
+     * Process a package upgrade/downgrade
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function upgradeBusinessPlan(Request $request)
+    {
+        // Validate the request
+        $validator = Validator::make($request->all(), [
+            'business_id' => 'required|exists:businesses,id',
+            'package_id' => 'required|exists:packages,id',
+            'billing_cycle' => 'required|in:monthly,annual',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        
+        // Get the business
+        $business = Business::find($request->business_id);
+        
+        // Check if the user is authorized to update this business
+        if (Auth::id() !== $business->user_id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized to update this business'
+            ], 403);
+        }
+        
+        // Process the package change
+        $result = $this->paymentService->processPackageChange(
+            $business,
+            $request->package_id,
+            $request->billing_cycle
+        );
+        
+        if (!$result['success']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $result['message']
+            ], 400);
+        }
+        
+        // Return the updated business data
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Business plan updated successfully',
+            'data' => [
+                'business' => $business->fresh(),
+                'payment' => [
+                    'invoice_id' => $result['invoice_id'],
+                    'amount' => $result['amount']
+                ]
+            ]
+        ]);
+    }
+
+    /**
+     * Compare two packages
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function comparePackages(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'current_package' => 'required',
+            'new_package' => 'required',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        
+        $result = $this->packageService->comparePackages(
+            $request->current_package,
+            $request->new_package
+        );
+        
+        if ($result === null) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'One or both packages not found'
+            ], 404);
+        }
+        
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'comparison' => $result
+            ]
+        ]);
     }
 }
