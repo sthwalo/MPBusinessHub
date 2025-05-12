@@ -7,14 +7,38 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use App\Models\User;
-use App\Models\OperatingHour;
-use Illuminate\Support\Facades\DB;
-use App\Models\Product;
+use App\Services\BusinessService;
+use App\Services\BusinessProfileService;
+use App\Services\BusinessStatisticsService;
+use App\Services\BusinessSearchService;
+use App\Services\BusinessPlanService;
 use Illuminate\Support\Facades\Log;
 
 class BusinessController extends Controller
 {
+    protected $businessService;
+    protected $profileService;
+    protected $statisticsService;
+    protected $searchService;
+    protected $planService;
+    
+    /**
+     * Constructor
+     */
+    public function __construct(
+        BusinessService $businessService,
+        BusinessProfileService $profileService,
+        BusinessStatisticsService $statisticsService,
+        BusinessSearchService $searchService,
+        BusinessPlanService $planService
+    ) {
+        $this->businessService = $businessService;
+        $this->profileService = $profileService;
+        $this->statisticsService = $statisticsService;
+        $this->searchService = $searchService;
+        $this->planService = $planService;
+    }
+    
     /**
      * Get a listing of businesses with optional filtering
      * 
@@ -23,49 +47,20 @@ class BusinessController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Business::with('user');
+        $filters = $request->all();
+        $result = $this->searchService->getFilteredBusinesses($filters);
         
-        // Apply category filter if provided
-        if ($request->has('category')) {
-            $query->where('category', $request->category);
+        if (!$result['success']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $result['message']
+            ], 500);
         }
-        
-        // Apply district filter if provided
-        if ($request->has('district')) {
-            $query->where('district', $request->district);
-        }
-        
-        // Only show approved businesses in the directory
-        $query->where('status', 'approved');
-        
-        // Get businesses
-        $businesses = $query->get();
-        
-        // Transform businesses to match the client's expected format
-        $transformedBusinesses = $businesses->map(function ($business) {
-            return [
-                'id' => $business->id,
-                'name' => $business->name,
-                'category' => $business->category,
-                'district' => $business->district,
-                'description' => $business->description,
-                'package_type' => $business->package_type ?? 'Basic',
-                'adverts_remaining' => $business->adverts_remaining ?? 0,
-                'social_features_remaining' => $business->social_features_remaining ?? 0,
-                'rating' => null, // No ratings yet
-                'contact' => [
-                    'phone' => $business->phone,
-                    'email' => $business->user->email,
-                    'website' => $business->website,
-                    'address' => $business->address
-                ],
-                'image_url' => $business->image_url
-            ];
-        });
         
         return response()->json([
             'status' => 'success',
-            'data' => $transformedBusinesses
+            'data' => $result['data'],
+            'pagination' => $result['pagination'] ?? null
         ]);
     }
 
@@ -77,108 +72,25 @@ class BusinessController extends Controller
      */
     public function getBusinessDetails(Request $request): JsonResponse
     {
-        try {
-            Log::info('Fetching business details for authenticated user');
-            
-            // Get the authenticated user
-            $user = Auth::user();
-            
-            // Find the business associated with the user
-            $business = Business::where('user_id', $user->id)
-                ->with(['operatingHours', 'package', 'reviews', 'products'])
-                ->first();
-            
-            if (!$business) {
-                Log::warning('No business found for user', ['user_id' => $user->id]);
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Business not found'
-                ], 404);
-            }
-            
-            // Format operating hours
-            $operatingHours = [];
-            $daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-            
-            // Initialize with default closed values
-            foreach ($daysOfWeek as $day) {
-                $operatingHours[$day] = 'Closed';
-            }
-            
-            // Override with actual values from database
-            foreach ($business->operatingHours as $hours) {
-                if (!$hours->is_closed && $hours->opening_time && $hours->closing_time) {
-                    $operatingHours[$hours->day_of_week] = $hours->opening_time . ' - ' . $hours->closing_time;
-                }
-            }
-            
-            // Calculate average rating if reviews exist
-            $averageRating = $business->reviews->count() > 0 
-                ? $business->reviews->avg('rating') 
-                : 0;
-                
-            // Get package information if available
-            $packageData = null;
-            if ($business->package) {
-                $packageData = [
-                    'id' => $business->package->id,
-                    'name' => $business->package->name,
-                    'description' => $business->package->description,
-                    'price_monthly' => $business->package->price_monthly,
-                    'price_annual' => $business->package->price_annual,
-                    'advert_limit' => $business->package->advert_limit,
-                    'product_limit' => $business->package->product_limit,
-                    'features' => $business->package->features,
-                    'popular' => $business->package->popular ?? false
-                ];
-            }
-            
-            // Transform business data to match client's expected format
-            // KEEPING ALL ORIGINAL FIELDS while adding package relationship
-            $businessData = [
-                'id' => $business->id,
-                'name' => $business->name,
-                'category' => $business->category,
-                'district' => $business->district,
-                'description' => $business->description,
-                'address' => $business->address,
-                'phone' => $business->phone,
-                'email' => $user->email,
-                'website' => $business->website,
-                'package_id' => $business->package_id,
-                'package_type' => $business->package_type ?? ($business->package ? $business->package->name : 'Basic'),
-                'package' => $packageData, // Add the package data
-                'adverts_remaining' => $business->adverts_remaining ?? 0,
-                'billing_cycle' => $business->billing_cycle ?? 'monthly',
-                'subscription_ends_at' => $business->subscription_ends_at ?? null,
-                'social_features_remaining' => $business->social_features_remaining ?? 0,
-                'rating' => $averageRating,
-                'review_count' => $business->reviews->count(),
-                'subscription' => [
-                    'status' => 'active',
-                    'next_billing_date' => date('Y-m-d', strtotime('+30 days')),
-                    'amount' => 0
-                ],
-                'statistics' => [
-                    'views' => $business->view_count ?? 0,
-                    'contacts' => $business->contact_count ?? 0,
-                    'reviews' => $business->reviews->count()
-                ],
-                'operatingHours' => $operatingHours,
-                'image_url' => $business->image_url
-            ];
-            
-            return response()->json([
-                'status' => 'success',
-                'data' => $businessData
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error fetching business details: ' . $e->getMessage());
+        $business = $this->businessService->getCurrentUserBusiness();
+        
+        if (!$business) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'An error occurred while fetching business details: ' . $e->getMessage()
+                'message' => 'Business not found'
+            ], 404);
+        }
+        
+        $result = $this->businessService->getBusinessDetails($business->id);
+        
+        if (!$result['success']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $result['message']
             ], 500);
         }
+        
+        return response()->json($result['data']);
     }
 
     /**
@@ -187,185 +99,45 @@ class BusinessController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    /**
-     * Update the authenticated user's business profile
-     * 
-     * @param Request $request
-     * @return JsonResponse
-     */
     public function updateBusinessProfile(Request $request): JsonResponse
     {
-        try {
-            // Get the authenticated user
-            $user = Auth::user();
-            
-            // Find the business associated with the user
-            $business = Business::where('user_id', $user->id)->first();
-            
-            if (!$business) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Business not found. Please contact support if this issue persists.'
-                ], 404);
-            }
-            
-            // Validate the request data
-            $validator = Validator::make($request->all(), [
-                'businessName' => 'required|string|max:255',
-                'category' => 'required|string|max:255',
-                'district' => 'required|string|max:255',
-                'description' => 'required|string|min:50',
-                'phone' => 'required|string|max:255',
-                'email' => 'required|email|max:255',
-                'website' => 'nullable|string|max:255',
-                'address' => 'required|string|max:255',
-                'operatingHours' => 'nullable|array',
-                'image_url' => 'nullable|string|max:255',
-                'package_type' => 'required|string|max:255',
-                'adverts_remaining' => 'required|integer',
-                'social_features_remaining' => 'required|integer',
-                'billing_cycle' => 'required|string|max:255',
-                'subscription_ends_at' => 'required|date',
-            ], [
-                'businessName.required' => 'Business name is required',
-                'businessName.max' => 'Business name cannot exceed 255 characters',
-                'category.required' => 'Please select a business category',
-                'district.required' => 'Please select a district',
-                'description.required' => 'Business description is required',
-                'description.min' => 'Business description must be at least 50 characters',
-                'phone.required' => 'Phone number is required',
-                'email.required' => 'Email address is required',
-                'email.email' => 'Please enter a valid email address',
-                'address.required' => 'Business address is required',
-                'image_url.required' => 'Image URL is required',
-                'package_type.required' => 'Package type is required',
-                'adverts_remaining.required' => 'Adverts remaining is required',
-                'social_features_remaining.required' => 'Social features remaining is required',
-                'billing_cycle.required' => 'Billing cycle is required',
-                'subscription_ends_at.required' => 'Subscription ends at is required',
-            ]);
-            
-            if ($validator->fails()) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Please correct the errors in your form',
-                    'errors' => $validator->errors()->toArray()
-                ], 422);
-            }
-            
-            // Check if email is already in use by another user
-            if ($user->email !== $request->email) {
-                $existingUser = User::where('email', $request->email)->where('id', '!=', $user->id)->first();
-                if ($existingUser) {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'This email is already in use by another account',
-                        'errors' => [
-                            'email' => ['This email address is already registered. Please use a different email.']
-                        ]
-                    ], 422);
-                }
-            }
-            
-            // Update the business
-            $business->name = $request->businessName;
-            $business->category = $request->category;
-            $business->district = $request->district;
-            $business->description = $request->description;
-            $business->phone = $request->phone;
-            $business->website = $request->website;
-            $business->address = $request->address;
-            
-            // Save image_url if provided
-            if ($request->has('image_url')) {
-                $business->image_url = $request->image_url;
-            }
-            
-            $business->save();
-            
-            // Update operating hours if provided
-            if ($request->has('operatingHours') && is_array($request->operatingHours)) {
-                foreach ($request->operatingHours as $day => $hours) {
-                    // Skip if day is not valid
-                    if (!in_array($day, ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])) {
-                        continue;
-                    }
-                    
-                    $isClosed = ($hours === 'Closed');
-                    $openingTime = null;
-                    $closingTime = null;
-                    
-                    // Parse hours if not closed
-                    if (!$isClosed) {
-                        $timeParts = explode(' - ', $hours);
-                        if (count($timeParts) === 2) {
-                            $openingTime = trim($timeParts[0]);
-                            $closingTime = trim($timeParts[1]);
-                        }
-                    }
-                    
-                    // Update or create operating hours
-                    OperatingHour::updateOrCreate(
-                        ['business_id' => $business->id, 'day_of_week' => $day],
-                        [
-                            'opening_time' => $openingTime,
-                            'closing_time' => $closingTime,
-                            'is_closed' => $isClosed
-                        ]
-                    );
-                }
-            }
-            
-            // Update the user's email if it has changed
-            if ($user->email !== $request->email) {
-                $user->email = $request->email;
-                $user->save();
-            }
-            
-            // Get updated operating hours
-            $business->load('operatingHours');
-            $operatingHours = [];
-            $daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-            
-            // Initialize with default closed values
-            foreach ($daysOfWeek as $day) {
-                $operatingHours[$day] = 'Closed';
-            }
-            
-            // Override with actual values from database
-            foreach ($business->operatingHours as $hours) {
-                if (!$hours->is_closed && $hours->opening_time && $hours->closing_time) {
-                    $operatingHours[$hours->day_of_week] = $hours->opening_time . ' - ' . $hours->closing_time;
-                }
-            }
-            
-            // Return updated business data
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Business profile updated successfully',
-                'data' => [
-                    'id' => $business->id,
-                    'name' => $business->name,
-                    'category' => $business->category,
-                    'district' => $business->district,
-                    'description' => $business->description,
-                    'address' => $business->address,
-                    'phone' => $business->phone,
-                    'email' => $user->email,
-                    'website' => $business->website,
-                    'operatingHours' => $operatingHours,
-                    'image_url' => $business->image_url,
-                    'social_media' => $business->social_media ?? []
-                ]
-            ]);
-        } catch (\Exception $e) {
+        $business = $this->businessService->getCurrentUserBusiness();
+        
+        if (!$business) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'An unexpected error occurred while updating your business profile',
-                'debug' => config('app.debug') ? $e->getMessage() : null
+                'message' => 'Business not found'
+            ], 404);
+        }
+        
+        // Validate the request data
+        $validationResult = $this->profileService->validateProfileData($request->all());
+        
+        if (!$validationResult['success']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validationResult['message'],
+                'errors' => $validationResult['errors']
+            ], 422);
+        }
+        
+        // Update the business profile
+        $updateResult = $this->profileService->updateProfile($business, $validationResult['data']);
+        
+        if (!$updateResult['success']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $updateResult['message']
             ], 500);
         }
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Business profile updated successfully',
+            'data' => $updateResult['business']
+        ]);
     }
+
     /**
      * Get a listing of businesses for the business directory
      * 
@@ -374,60 +146,21 @@ class BusinessController extends Controller
      */
     public function check(Request $request): JsonResponse
     {
-        $query = Business::with('user');
+        $filters = $request->all();
+        $filters['status'] = 'approved'; // Only show approved businesses
         
-        // Apply category filter if provided
-        if ($request->has('category')) {
-            $query->where('category', $request->category);
+        $result = $this->searchService->getFilteredBusinesses($filters);
+        
+        if (!$result['success']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $result['message']
+            ], 500);
         }
-        
-        // Apply district filter if provided
-        if ($request->has('district')) {
-            $query->where('district', $request->district);
-        }
-        
-        // Only show approved businesses in the directory
-        $query->where('status', 'approved');
-        
-        // Get businesses
-        $businesses = $query->get();
-        
-        // Transform businesses to match the client's expected format
-        $transformedBusinesses = $businesses->map(function ($business) {
-            // Safely calculate average rating from approved reviews
-            $averageRating = null;
-            if (method_exists($business, 'reviews')) {
-                try {
-                    $averageRating = $business->reviews()
-                        ->where('is_approved', true)
-                        ->avg('rating');
-                } catch (Exception $e) {
-                    // Silently handle the error and keep null rating
-                }
-            }
-            
-            return [
-                'id' => $business->id,
-                'name' => $business->name,
-                'category' => $business->category,
-                'district' => $business->district,
-                'description' => $business->description,
-                'package_type' => $business->package_type ?? 'Basic', // Use actual package type
-                'rating' => $averageRating, // Use calculated average rating
-                'contact' => [
-                    'phone' => $business->phone,
-                    'whatsapp' => $business->phone,
-                    'email' => $business->user->email,
-                    'website' => $business->website,
-                    'address' => $business->address,
-                    'social_media' => $business->social_media ?? []
-                ],
-                'image_url' => $business->image_url // Use the actual image URL from the database
-            ];
-        });
         
         return response()->json([
-            'businesses' => $transformedBusinesses
+            'status' => 'success',
+            'data' => $result['data']
         ]);
     }
 
@@ -439,95 +172,18 @@ class BusinessController extends Controller
      */
     public function show($id): JsonResponse
     {
-        try {
-            // Find the business by ID with basic relationships first
-            $business = Business::with(['user', 'operatingHours', 'reviews'])->find($id);
-            
-            if (!$business) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Business not found'
-                ], 404);
-            }
-            
-            // Load products separately with error handling
-            $products = [];
-            try {
-                $products = Product::where('business_id', $business->id)
-                    ->where('status', 'active')
-                    ->get();
-            } catch (\Exception $e) {
-                // Log product loading error but continue
-                Log::error('Error loading products: ' . $e->getMessage());
-            }
-            
-            // Calculate average rating if reviews exist
-            $averageRating = $business->reviews->count() > 0 
-                ? $business->reviews->avg('rating') 
-                : null;
-            
-            // Format reviews if they exist
-            $formattedReviews = $business->reviews->map(function ($review) {
-                $reviewData = [
-                    'id' => $review->id,
-                    'rating' => $review->rating,
-                    'comment' => $review->comment,
-                    'reviewer_name' => $review->reviewer_name,
-                    'created_at' => $review->created_at->format('Y-m-d H:i:s'),
-                ];
-                
-                return $reviewData;
-            })->values()->all();
-            
-            // Format operating hours
-            $operatingHours = [];
-            $daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-            
-            // Initialize with default closed values
-            foreach ($daysOfWeek as $day) {
-                $operatingHours[$day] = 'Closed';
-            }
-            
-            // Override with actual values from database
-            foreach ($business->operatingHours as $hours) {
-                if (!$hours->is_closed && $hours->opening_time && $hours->closing_time) {
-                    $operatingHours[$hours->day_of_week] = $hours->opening_time . ' - ' . $hours->closing_time;
-                }
-            }
-            
-            // Transform business data to match client's expected format
-            $businessData = [
-                'id' => $business->id,
-                'name' => $business->name,
-                'category' => $business->category,
-                'district' => $business->district,
-                'description' => $business->description,
-                'package_type' => $business->package_type ?? 'Basic', // Default to Basic tier if not set
-                'rating' => $averageRating, // Use calculated average or null
-                'review_count' => $business->review_count ?? $business->reviews->count(), // Add review count
-                'image_url' => $business->image_url, 
-                'contact' => [
-                    'phone' => $business->phone,
-                    'email' => $business->user->email,
-                    'website' => $business->website,
-                    'address' => $business->address,
-                    'whatsapp' => $business->phone, // Using phone as WhatsApp for now
-                    'social_media' => $business->social_media ?? []
-                ],
-                'hours' => $operatingHours,
-                'products' => $products, // Use the separately loaded products
-                'reviews' => $formattedReviews,
-                'images' => []
-            ];
-            
-            return response()->json($businessData);
-        } catch (\Exception $e) {
+        $result = $this->businessService->getBusinessDetails($id);
+        
+        if (!$result['success']) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'An error occurred while fetching business details: ' . $e->getMessage()
-            ], 500);
+                'message' => $result['message']
+            ], 404);
         }
+        
+        return response()->json($result['data']);
     }
+
     /**
      * Increment the view count for a business
      * 
@@ -536,21 +192,20 @@ class BusinessController extends Controller
      */
     public function incrementViewCount($id): JsonResponse
     {
-        try {
-            $business = Business::findOrFail($id);
-            $business->increment('view_count');
-            
-            return response()->json([
-                'status' => 'success',
-                'message' => 'View count incremented successfully',
-                'view_count' => $business->view_count
-            ]);
-        } catch (\Exception $e) {
+        $result = $this->statisticsService->incrementViewCount($id);
+        
+        if (!$result['success']) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to increment view count: ' . $e->getMessage()
+                'message' => $result['message']
             ], 500);
         }
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'View count incremented successfully',
+            'view_count' => $result['view_count']
+        ]);
     }
     
     /**
@@ -561,22 +216,22 @@ class BusinessController extends Controller
      */
     public function incrementContactCount($id): JsonResponse
     {
-        try {
-            $business = Business::findOrFail($id);
-            $business->increment('contact_count');
-            
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Contact count incremented successfully',
-                'contact_count' => $business->contact_count
-            ]);
-        } catch (\Exception $e) {
+        $result = $this->statisticsService->incrementContactCount($id);
+        
+        if (!$result['success']) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to increment contact count: ' . $e->getMessage()
+                'message' => $result['message']
             ], 500);
         }
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Contact count incremented successfully',
+            'contact_count' => $result['contact_count']
+        ]);
     }
+    
     /**
      * Remove all businesses from the database (admin use only)
      * 
@@ -585,41 +240,118 @@ class BusinessController extends Controller
      */
     public function removeAllBusinesses(Request $request): JsonResponse
     {
-        try {
-            // Check for admin access - this is a destructive operation
-            // In a production environment, you would want more robust authentication
-            $user = Auth::user();
-            if (!$user || $user->email !== config('app.admin_email')) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Unauthorized. Admin access required.'
-                ], 403);
-            }
-
-            // Get count before deletion
-            $count = Business::count();
-            
-            // Delete all operating hours first (respecting foreign key constraints)
-            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-            
-            // Delete all businesses
-            Business::truncate();
-            
-            // Reset auto-increment
-            DB::statement('ALTER TABLE businesses AUTO_INCREMENT = 1;');
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-            
-            return response()->json([
-                'status' => 'success',
-                'message' => $count . ' businesses have been removed from the directory.',
-                'data' => [
-                    'count' => $count
-                ]
-            ]);
-        } catch (\Exception $e) {
+        // Check for admin access - this is a destructive operation
+        $user = Auth::user();
+        if (!$user || $user->email !== config('app.admin_email')) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'An error occurred while removing businesses: ' . $e->getMessage()
+                'message' => 'Unauthorized. Admin access required.'
+            ], 403);
+        }
+
+        $result = $this->businessService->removeAllBusinesses();
+        
+        if (!$result['success']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $result['message']
+            ], 500);
+        }
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => $result['message'],
+            'data' => [
+                'count' => $result['count']
+            ]
+        ]);
+    }
+    
+    /**
+     * Upgrade a business plan
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function upgradePlan(Request $request): JsonResponse
+    {
+        try {
+            // Get the authenticated user's business
+            $business = $this->businessService->getCurrentUserBusiness();
+            
+            if (!$business) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Business not found'
+                ], 404);
+            }
+            
+            // Validate the request data
+            $validator = Validator::make($request->all(), [
+                'package_id' => 'required|exists:packages,id',
+                'payment_method' => 'required|string',
+                'billing_cycle' => 'required|in:monthly,annual'
+            ]);
+            
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+            
+            // Process the plan upgrade
+            $result = $this->planService->upgradePlan(
+                $business,
+                $request->package_id,
+                $request->payment_method,
+                $request->billing_cycle
+            );
+            
+            if (!$result['success']) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $result['message'],
+                    'error_code' => $result['error_code'] ?? null
+                ], 400);
+            }
+            
+            // If there's a redirect URL, return it
+            if (isset($result['redirect_url'])) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Payment initiated',
+                    'redirect_url' => $result['redirect_url'],
+                    'payment_data' => $result['payment_data'] ?? null,
+                    'method' => $result['method'] ?? 'GET'
+                ]);
+            }
+            
+            // Return the updated business details
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Business plan upgraded successfully',
+                'data' => [
+                    'business_id' => $business->id,
+                    'package_id' => $request->package_id,
+                    'package_name' => $result['package_name'] ?? null,
+                    'package_type' => $result['package_type'] ?? null,
+                    'billing_cycle' => $request->billing_cycle,
+                    'transaction_id' => $result['transaction_id'] ?? null,
+                    'payment_id' => $result['payment_id'] ?? null
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error upgrading business plan: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'request' => $request->all()
+            ]);
+            
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred while upgrading the business plan: ' . $e->getMessage()
             ], 500);
         }
     }
