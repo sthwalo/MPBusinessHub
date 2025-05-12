@@ -169,6 +169,11 @@ Route::post('/payfast/notify', [App\Http\Controllers\PayFastController::class, '
 Route::get('/payfast/return', [App\Http\Controllers\PayFastController::class, 'return'])->name('payfast.return');
 Route::get('/payfast/cancel', [App\Http\Controllers\PayFastController::class, 'cancel'])->name('payfast.cancel');
 
+// Payment notification and redirect routes
+Route::post('payment/notify', [\App\Http\Controllers\PaymentController::class, 'handlePayFastNotification']);
+Route::get('payment/success', [\App\Http\Controllers\PaymentController::class, 'handlePaymentSuccess']);
+Route::get('payment/cancel', [\App\Http\Controllers\PaymentController::class, 'handlePaymentCancel']);
+
 // Social media routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::put('/business/social-media', [SocialMediaController::class, 'update']);

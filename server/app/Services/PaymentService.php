@@ -176,11 +176,7 @@ class PaymentService
                 throw new \Exception("Payment method '{$paymentMethod}' is not supported");
             }
             
-            // In a real implementation, this would make an API call to the payment gateway
-            // For now, we'll simulate a successful payment
-            $transactionId = $this->simulatePaymentGateway($paymentMethod, $amount);
-            
-            // Create a payment record
+            // Create a payment record first
             $payment = new Payment();
             $payment->business_id = $business->id;
             $payment->invoice_id = $invoice->id;
@@ -188,7 +184,38 @@ class PaymentService
             $payment->currency = $this->currency;
             $payment->payment_method = $paymentMethod;
             $payment->payment_gateway = $paymentGateway;
-            $payment->transaction_id = $transactionId;
+            $payment->status = 'pending';
+            $payment->save();
+            
+            // Process payment based on gateway
+            $paymentResult = null;
+            
+            switch ($paymentGateway) {
+                case 'PayFast':
+                    $paymentResult = $this->processPayFastPayment($business, $invoice, $payment);
+                    break;
+                    
+                case 'Ozow':
+                    $paymentResult = $this->processOzowPayment($business, $invoice, $payment);
+                    break;
+                    
+                case 'SnapScan':
+                case 'Zapper':
+                    $paymentResult = $this->processMobilePayment($business, $invoice, $payment, $paymentGateway);
+                    break;
+                    
+                default:
+                    // For testing/development, simulate a successful payment
+                    $paymentResult = $this->simulatePayment($payment);
+                    break;
+            }
+            
+            if (!$paymentResult['success']) {
+                throw new \Exception($paymentResult['message']);
+            }
+            
+            // Update payment with transaction details
+            $payment->transaction_id = $paymentResult['transaction_id'] ?? null;
             $payment->status = 'completed';
             $payment->save();
             
@@ -196,7 +223,8 @@ class PaymentService
                 'success' => true,
                 'payment_id' => $payment->id,
                 'transaction_id' => $payment->transaction_id,
-                'gateway' => $paymentGateway
+                'gateway' => $paymentGateway,
+                'redirect_url' => $paymentResult['redirect_url'] ?? null
             ];
             
         } catch (\Exception $e) {
@@ -207,12 +235,109 @@ class PaymentService
                 'payment_method' => $paymentMethod
             ]);
             
+            // If we created a payment record, update its status to failed
+            if (isset($payment) && $payment->id) {
+                $payment->status = 'failed';
+                $payment->notes = $e->getMessage();
+                $payment->save();
+            }
+            
             return [
                 'success' => false,
                 'message' => 'Payment gateway error: ' . $e->getMessage(),
                 'error_code' => $e->getCode()
             ];
         }
+    }
+    
+    /**
+     * Process payment through PayFast
+     *
+     * @param Business $business
+     * @param Invoice $invoice
+     * @param Payment $payment
+     * @return array
+     */
+    protected function processPayFastPayment(Business $business, Invoice $invoice, Payment $payment)
+    {
+        // Initialize PayFast service
+        $payFastService = app(\App\Services\PaymentGateways\PayFastService::class);
+        
+        // Generate payment URL
+        $result = $payFastService->generatePaymentUrl($invoice, $business);
+        
+        if (!$result['success']) {
+            throw new \Exception($result['message']);
+        }
+        
+        // For PayFast, we return a redirect URL and payment data
+        return [
+            'success' => true,
+            'transaction_id' => 'PF_' . uniqid(),  // This will be updated when PayFast sends the ITN
+            'redirect_url' => $result['payment_url'],
+            'payment_data' => $result['payment_data'],
+            'method' => $result['method']
+        ];
+    }
+    
+    /**
+     * Process payment through Ozow (Instant EFT)
+     *
+     * @param Business $business
+     * @param Invoice $invoice
+     * @param Payment $payment
+     * @return array
+     */
+    protected function processOzowPayment(Business $business, Invoice $invoice, Payment $payment)
+    {
+        // In a real implementation, this would integrate with Ozow API
+        // For now, we'll simulate a successful payment
+        
+        return [
+            'success' => true,
+            'transaction_id' => 'OZW_' . uniqid() . '_' . date('Ymd'),
+            'redirect_url' => 'https://pay.ozow.com/redirect-simulation'
+        ];
+    }
+    
+    /**
+     * Process payment through mobile payment apps (SnapScan, Zapper)
+     *
+     * @param Business $business
+     * @param Invoice $invoice
+     * @param Payment $payment
+     * @param string $gateway
+     * @return array
+     */
+    protected function processMobilePayment(Business $business, Invoice $invoice, Payment $payment, $gateway)
+    {
+        // In a real implementation, this would generate a QR code for the mobile app
+        // For now, we'll simulate a successful payment
+        
+        $prefix = substr($gateway, 0, 3);
+        
+        return [
+            'success' => true,
+            'transaction_id' => strtoupper($prefix) . '_' . uniqid() . '_' . date('Ymd'),
+            'qr_code_url' => 'https://example.com/qr-simulation/' . strtolower($gateway) . '/' . $invoice->id
+        ];
+    }
+    
+    /**
+     * Simulate a payment (for testing/development)
+     *
+     * @param Payment $payment
+     * @return array
+     */
+    protected function simulatePayment(Payment $payment)
+    {
+        // Generate a unique transaction ID based on the payment method
+        $prefix = substr($payment->payment_method, 0, 3);
+        
+        return [
+            'success' => true,
+            'transaction_id' => strtoupper($prefix) . '_' . uniqid() . '_' . date('Ymd')
+        ];
     }
 
     /**
@@ -236,21 +361,6 @@ class PaymentService
         return $gateways[$paymentMethod] ?? null;
     }
     
-    /**
-     * Simulate a payment gateway response
-     * In production, this would be replaced with actual API calls
-     *
-     * @param string $paymentMethod
-     * @param float $amount
-     * @return string
-     */
-    protected function simulatePaymentGateway($paymentMethod, $amount)
-    {
-        // Generate a unique transaction ID based on the payment method
-        $prefix = substr($paymentMethod, 0, 3);
-        return strtoupper($prefix) . '_' . uniqid() . '_' . date('Ymd');
-    }
-
     /**
      * Update the business subscription details
      *
@@ -306,9 +416,6 @@ class PaymentService
      */
     protected function sendPaymentNotification(Business $business, Invoice $invoice, $type = 'success', $errorMessage = null)
     {
-        // In a real implementation, this would send an email to the business owner
-        // For now, we'll just log it
-        
         $user = $business->user;
         
         if (!$user || !$user->email) {
@@ -327,23 +434,43 @@ class PaymentService
             ? "Your payment of {$this->currency} {$invoice->amount} for the {$invoice->package->name} package was successful."
             : "Your payment failed: {$errorMessage}. Please try again or contact support.";
         
-        Log::info("Would send email: {$subject} to {$user->email}", [
+        Log::info("Sending email: {$subject} to {$user->email}", [
             'message' => $message,
             'business_id' => $business->id,
             'invoice_id' => $invoice->id
         ]);
         
-        // In production, uncomment this to send actual emails
-        /*
-        Mail::send('emails.payment_notification', [
-            'business' => $business,
-            'invoice' => $invoice,
-            'type' => $type,
-            'message' => $message
-        ], function ($mail) use ($user, $subject) {
-            $mail->to($user->email, $user->name)
-                ->subject($subject);
-        });
-        */
+        // Send actual email
+        try {
+            $templateData = [
+                'user' => $user,
+                'business' => $business,
+                'invoice' => $invoice,
+                'package' => $invoice->package,
+                'amount' => $invoice->amount,
+                'currency' => $this->currency,
+                'date' => now()->format('d F Y'),
+                'error_message' => $errorMessage,
+                'support_email' => config('mail.support_address', 'support@mpbusinesshub.co.za'),
+                'app_name' => config('app.name')
+            ];
+            
+            $template = $type === 'success' ? 'emails.payment.success' : 'emails.payment.failed';
+            
+            Mail::send($template, $templateData, function($mail) use ($user, $subject) {
+                $mail->to($user->email, $user->name)
+                    ->subject($subject);
+            });
+            
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to send payment notification email: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'business_id' => $business->id,
+                'invoice_id' => $invoice->id
+            ]);
+            
+            return false;
+        }
     }
 }
