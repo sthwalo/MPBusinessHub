@@ -16,7 +16,7 @@ class StatisticsController extends Controller
     {
         $range = $request->query('range', 'week');
         $now = Carbon::now();
-        
+
         switch ($range) {
             case 'day':
                 $startDate = $now->copy()->subDay();
@@ -30,110 +30,51 @@ class StatisticsController extends Controller
                 $startDate = $now->copy()->subYear();
                 $previousStart = $now->copy()->subYears(2);
                 break;
-            case 'week':
-            default:
+            default: // week
                 $startDate = $now->copy()->subWeek();
                 $previousStart = $now->copy()->subWeeks(2);
                 break;
         }
-        
+
         $previousEnd = $startDate;
-        
+
         // User statistics
         $totalUsers = User::count();
-        $newUsers = User::where('created_at', '>=', $startDate)->count();
-        $previousUsers = User::whereBetween('created_at', [$previousStart, $previousEnd])->count();
-        $userGrowth = $previousUsers > 0 ? round((($newUsers - $previousUsers) / $previousUsers) * 100, 2) : 0;
-        
+        $adminUsers = User::where('role', 'admin')->count();
+        $moderatorUsers = User::where('role', 'moderator')->count();
+        $regularUsers = User::where('role', 'user')->count();
+
         // Business statistics
         $totalBusinesses = Business::count();
-        $newBusinesses = Business::where('created_at', '>=', $startDate)->count();
-        $previousBusinesses = Business::whereBetween('created_at', [$previousStart, $previousEnd])->count();
-        $businessGrowth = $previousBusinesses > 0 ? round((($newBusinesses - $previousBusinesses) / $previousBusinesses) * 100, 2) : 0;
-        
-        // Revenue statistics
-        $totalRevenue = Payment::where('status', 'completed')->sum('amount');
-        $newRevenue = Payment::where('status', 'completed')
-            ->where('created_at', '>=', $startDate)
-            ->sum('amount');
-        $previousRevenue = Payment::where('status', 'completed')
-            ->whereBetween('created_at', [$previousStart, $previousEnd])
-            ->sum('amount');
-        $revenueGrowth = $previousRevenue > 0 ? round((($newRevenue - $previousRevenue) / $previousRevenue) * 100, 2) : 0;
-        
-        // Business status counts
         $pendingBusinesses = Business::where('status', 'pending')->count();
         $approvedBusinesses = Business::where('status', 'approved')->count();
         $rejectedBusinesses = Business::where('status', 'rejected')->count();
-        
-        // Recent activity
-        $recentActivity = [];
-        
-        // Recent user registrations
-        $recentUsers = User::orderBy('created_at', 'desc')->take(5)->get();
-        foreach ($recentUsers as $user) {
-            $recentActivity[] = [
-                'description' => 'New user registration',
-                'user' => $user->name,
-                'time' => $user->created_at->diffForHumans()
-            ];
-        }
-        
-        // Recent business registrations
-        $recentBusinesses = Business::orderBy('created_at', 'desc')->take(5)->get();
-        foreach ($recentBusinesses as $business) {
-            $recentActivity[] = [
-                'description' => 'New business registration',
-                'user' => $business->name,
-                'time' => $business->created_at->diffForHumans()
-            ];
-        }
-        
-        // Recent reviews
-        $recentReviews = Review::orderBy('created_at', 'desc')->take(5)->get();
-        foreach ($recentReviews as $review) {
-            $recentActivity[] = [
-                'description' => 'New review submitted',
-                'user' => $review->reviewer_name,
-                'time' => $review->created_at->diffForHumans()
-            ];
-        }
-        
-        // Sort recent activity by time
-        usort($recentActivity, function($a, $b) {
-            return Carbon::parse($b['time']) <=> Carbon::parse($a['time']);
-        });
-        
-        // Limit to 10 most recent activities
-        $recentActivity = array_slice($recentActivity, 0, 10);
-        
+
+        // Review statistics
+        $totalReviews = Review::count();
+        $pendingReviews = Review::where('status', 'pending')->count();
+        $approvedReviews = Review::where('status', 'approved')->count();
+        $rejectedReviews = Review::where('status', 'rejected')->count();
+
         return response()->json([
             'users' => [
-                'total' => $totalUsers,
-                'new' => $newUsers,
-                'growth' => $userGrowth
+                'total' => $totalUsers ?? 0,
+                'admin' => $adminUsers ?? 0,
+                'moderator' => $moderatorUsers ?? 0,
+                'user' => $regularUsers ?? 0,
             ],
             'businesses' => [
-                'total' => $totalBusinesses,
-                'new' => $newBusinesses,
-                'growth' => $businessGrowth
+                'total' => $totalBusinesses ?? 0,
+                'pending' => $pendingBusinesses ?? 0,
+                'approved' => $approvedBusinesses ?? 0,
+                'rejected' => $rejectedBusinesses ?? 0,
             ],
             'reviews' => [
-                'total' => $totalReviews,
-                'new' => $newReviews,
-                'growth' => $reviewGrowth
+                'total' => $totalReviews ?? 0,
+                'pending' => $pendingReviews ?? 0,
+                'approved' => $approvedReviews ?? 0,
+                'rejected' => $rejectedReviews ?? 0,
             ],
-            'revenue' => [
-                'total' => $totalRevenue,
-                'new' => $newRevenue,
-                'growth' => $revenueGrowth
-            ],
-            'businessStatus' => [
-                'pending' => $pendingBusinesses,
-                'approved' => $approvedBusinesses,
-                'rejected' => $rejectedBusinesses
-            ],
-            'recentActivity' => $recentActivity
         ]);
     }
 }
