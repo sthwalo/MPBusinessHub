@@ -251,4 +251,102 @@ class BusinessService
             ];
         }
     }
+
+    /**
+     * Update business profile
+     *
+     * @param Business $business
+     * @param array $data
+     * @return array
+     */
+    public function updateBusinessProfile(Business $business, array $data)
+    {
+        try {
+            DB::beginTransaction();
+            
+            $business->update($data);
+            
+            DB::commit();
+            
+            return [
+                'success' => true,
+                'message' => 'Business profile updated successfully',
+                'data' => $business->fresh()
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating business profile: ' . $e->getMessage());
+            
+            return [
+                'success' => false,
+                'message' => 'An error occurred while updating business profile'
+            ];
+        }
+    }
+
+    /**
+     * Change business status
+     *
+     * @param Business $business
+     * @param string $status
+     * @param string $reason
+     * @return array
+     */
+    public function changeBusinessStatus(Business $business, string $status, string $reason)
+    {
+        try {
+            if (!in_array($status, ['pending', 'approved', 'rejected'])) {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid status provided'
+                ];
+            }
+
+            $business->update([
+                'status' => $status,
+                'status_reason' => $reason,
+                'status_updated_at' => now()
+            ]);
+
+            // Notify the business owner
+            $business->user->notify(new BusinessStatusChanged($business, $status));
+
+            return [
+                'success' => true,
+                'message' => 'Business status updated successfully',
+                'data' => $business->fresh()
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error changing business status: ' . $e->getMessage());
+            
+            return [
+                'success' => false,
+                'message' => 'An error occurred while updating business status'
+            ];
+        }
+    }
+
+    /**
+     * Approve business
+     *
+     * @param Business $business
+     * @param string $reason
+     * @return array
+     */
+    public function approveBusiness(Business $business, string $reason)
+    {
+        return $this->changeBusinessStatus($business, 'approved', $reason);
+    }
+
+    /**
+     * Reject business
+     *
+     * @param Business $business
+     * @param string $reason
+     * @return array
+     */
+    public function rejectBusiness(Business $business, string $reason)
+    {
+        return $this->changeBusinessStatus($business, 'rejected', $reason);
+    }
 }

@@ -141,6 +141,17 @@ class BusinessRegistrationServiceTest extends TestCase
         $mockUser = Mockery::mock(User::class);
         $mockUser->shouldReceive('getAttribute')->with('id')->andReturn(1);
         $mockUser->shouldReceive('getAttribute')->with('email')->andReturn('mock@example.com');
+        $mockUser->shouldReceive('getAttribute')->with('name')->andReturn('Mock Business');
+        
+        // Allow accessing properties directly
+        $mockUser->shouldReceive('__get')->with('id')->andReturn(1);
+        $mockUser->shouldReceive('__get')->with('email')->andReturn('mock@example.com');
+        $mockUser->shouldReceive('__get')->with('name')->andReturn('Mock Business');
+        
+        // Add expectation for sendEmailVerificationNotification
+        $mockUser->shouldReceive('sendEmailVerificationNotification')
+            ->once()
+            ->andReturn(null);
 
         $userRepository->shouldReceive('createUser')
             ->once()

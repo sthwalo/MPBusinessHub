@@ -36,9 +36,8 @@ class BusinessRegistrationTest extends TestCase
                 'message',
                 'data' => [
                     'token',
-                    'user_id',
-                    'business_id',
-                    'status'
+                    'user',
+                    'business'
                 ]
             ]);
 

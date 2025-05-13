@@ -147,7 +147,7 @@ Route::middleware('auth:sanctum')->get('/user/role', [App\Http\Controllers\AuthC
 // Add these routes to /server/routes/api.php
 
 // Admin routes
-Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
     // Business management
     Route::get('/businesses', [App\Http\Controllers\Admin\BusinessController::class, 'index']);
     
@@ -163,6 +163,7 @@ Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     // System statistics
     Route::get('/statistics', [App\Http\Controllers\Admin\StatisticsController::class, 'getStatistics']);
 });
+
 // Payment routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/payments/initiate', [App\Http\Controllers\PayFastController::class, 'initiate']);
@@ -182,4 +183,19 @@ Route::get('payment/cancel', [\App\Http\Controllers\PaymentController::class, 'h
 Route::middleware('auth:sanctum')->group(function () {
     Route::put('/business/social-media', [SocialMediaController::class, 'update']);
     Route::post('/business/social-media/feature', [SocialMediaController::class, 'createFeaturePost']);
+});
+
+// Business Management Routes
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::prefix('v1')->group(function () {
+        // Business Details
+        Route::get('/business/details', [BusinessController::class, 'details']);
+        Route::post('/business/update', [BusinessController::class, 'update']);
+        
+        // Business Status Management (Admin Only)
+        Route::middleware(['admin'])->group(function () {
+            Route::put('/businesses/{business}/approve', [BusinessController::class, 'approve']);
+            Route::put('/businesses/{business}/reject', [BusinessController::class, 'reject']);
+        });
+    });
 });
