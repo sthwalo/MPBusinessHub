@@ -30,6 +30,8 @@ class ReviewFactory extends Factory
             'comment' => $this->faker->paragraph(),
             'status' => $this->faker->randomElement(['pending', 'approved', 'rejected']),
             'rejection_reason' => null,
+            'reviewer_name' => $this->faker->name(),
+            'reviewer_email' => $this->faker->email(),
             'created_at' => $this->faker->dateTimeBetween('-1 year', 'now'),
             'updated_at' => $this->faker->dateTimeBetween('-1 year', 'now'),
         ];

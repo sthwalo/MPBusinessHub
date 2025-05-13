@@ -11,25 +11,34 @@ class ReviewController extends Controller
 {
     public function getPendingReviews()
     {
-        $reviews = Review::where('is_approved', false)
+        $reviews = Review::where('status', 'pending')
             ->with('business:id,name')
-            ->get()
-            ->map(function ($review) {
-                return [
-                    'id' => $review->id,
-                    'business_id' => $review->business_id,
-                    'business_name' => $review->business->name,
-                    'rating' => $review->rating,
-                    'comment' => $review->comment,
-                    'reviewer_name' => $review->reviewer_name,
-                    'reviewer_email' => $review->reviewer_email,
-                    'created_at' => $review->created_at->format('Y-m-d H:i:s')
-                ];
-            });
+            ->paginate(10); // Limit to 10 reviews per page
+
+        $formattedReviews = $reviews->map(function ($review) {
+            return [
+                'id' => $review->id,
+                'user_id' => $review->user_id,
+                'business_id' => $review->business_id,
+                'business_name' => $review->business->name,
+                'rating' => $review->rating,
+                'comment' => $review->comment,
+                'reviewer_name' => $review->reviewer_name,
+                'reviewer_email' => $review->reviewer_email,
+                'status' => $review->status,
+                'created_at' => $review->created_at->format('Y-m-d H:i:s')
+            ];
+        });
         
         return response()->json([
             'status' => 'success',
-            'data' => $reviews
+            'data' => $formattedReviews,
+            'pagination' => [
+                'total' => $reviews->total(),
+                'per_page' => $reviews->perPage(),
+                'current_page' => $reviews->currentPage(),
+                'last_page' => $reviews->lastPage(),
+            ],
         ]);
     }
     
@@ -44,14 +53,14 @@ class ReviewController extends Controller
             ], 404);
         }
         
-        $review->is_approved = true;
+        $review->status = 'approved';
         $review->save();
         
         // Update business review count
         $business = Business::find($review->business_id);
         if ($business) {
             $approvedReviews = Review::where('business_id', $business->id)
-                ->where('is_approved', true)
+                ->where('status', 'approved')
                 ->count();
                 
             $business->review_count = $approvedReviews;
@@ -64,7 +73,7 @@ class ReviewController extends Controller
         ]);
     }
     
-    public function rejectReview($id)
+    public function rejectReview(Request $request, $id)
     {
         $review = Review::find($id);
         
@@ -75,11 +84,13 @@ class ReviewController extends Controller
             ], 404);
         }
         
-        $review->delete();
+        $review->status = 'rejected';
+        $review->rejection_reason = $request->input('reason');
+        $review->save();
         
         return response()->json([
             'status' => 'success',
-            'message' => 'Review rejected and deleted successfully'
+            'message' => 'Review rejected successfully'
         ]);
     }
 }

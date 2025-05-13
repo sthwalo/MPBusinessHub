@@ -44,13 +44,17 @@ class ContentModerationTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonStructure([
+                'status',
                 'data' => [
                     '*' => [
                         'id',
                         'user_id',
                         'business_id',
+                        'business_name',
                         'rating',
                         'comment',
+                        'reviewer_name',
+                        'reviewer_email',
                         'status',
                         'created_at',
                     ]
@@ -73,7 +77,7 @@ class ContentModerationTest extends TestCase
     public function test_non_admin_cannot_get_pending_reviews(): void
     {
         // Skip this test until the admin middleware is properly fixed
-        $this->markTestSkipped('This test is skipped until the admin middleware is properly fixed');
+        //$this->markTestSkipped('This test is skipped until the admin middleware is properly fixed');
         
         // Create a regular user
         $user = User::factory()->create([
@@ -223,6 +227,9 @@ class ContentModerationTest extends TestCase
      */
     public function test_non_admin_cannot_reject_review(): void
     {
+        // Skip this test until the admin middleware is properly fixed
+        //$this->markTestSkipped('This test is skipped until the admin middleware is properly fixed');
+        
         // Create a regular user
         $user = User::factory()->create([
             'email_verified_at' => now(),
