@@ -26,7 +26,7 @@ return new class extends Migration
         // Add status column to businesses table if it doesn't exist
         if (Schema::hasTable('businesses') && !Schema::hasColumn('businesses', 'status')) {
             Schema::table('businesses', function (Blueprint $table) {
-                $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+                $table->string('status')->default('pending'); // Use string instead of enum for flexibility
             });
         }
     }
@@ -36,12 +36,19 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        
-        if (Schema::hasTable('businesses') && Schema::hasColumn('businesses', 'status')) {
+        if (Schema::hasTable('businesses')) {
+            // Drop foreign key constraint on businesses table
             Schema::table('businesses', function (Blueprint $table) {
-                $table->dropColumn('status');
+                if (Schema::hasColumn('businesses', 'user_id')) {
+                    $table->dropForeign(['user_id']); // Replace 'user_id' with the actual foreign key column name
+                }
+                if (Schema::hasColumn('businesses', 'status')) {
+                    $table->dropColumn('status');
+                }
             });
         }
+
+        // Drop users table
+        Schema::dropIfExists('users');
     }
 };
