@@ -214,15 +214,15 @@ class BusinessManagementTest extends TestCase
         // Create packages
         $basicPackage = Package::create([
             'name' => 'Basic',
-            'monthly_price' => 0,
-            'annual_price' => 0,
+            'price_monthly' => 0,
+            'price_annual' => 0,
             'is_active' => true,
         ]);
-
+        
         $premiumPackage = Package::create([
             'name' => 'Premium',
-            'monthly_price' => 199,
-            'annual_price' => 1990,
+            'price_monthly' => 199,
+            'price_annual' => 1990,
             'is_active' => true,
         ]);
 

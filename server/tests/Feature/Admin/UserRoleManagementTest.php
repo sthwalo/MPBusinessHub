@@ -119,7 +119,7 @@ class UserRoleManagementTest extends TestCase
     public function test_non_admin_cannot_update_user_role(): void
     {
         // This test is skipped until the admin middleware is properly applied
-        $this->markTestSkipped('This test is skipped until the admin middleware is properly applied');
+        //$this->markTestSkipped('This test is skipped until the admin middleware is properly applied');
         
         // Create a regular user
         $user1 = User::factory()->create([
