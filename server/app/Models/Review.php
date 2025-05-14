@@ -23,6 +23,8 @@ class Review extends Model
         'reviewer_name',
         'reviewer_email',
         'is_approved',
+        'status',
+        'rejection_reason',
     ];
 
     /**

@@ -18,7 +18,7 @@ class ReviewController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $reviews = Review::where('is_approved', true)
+            $reviews = Review::where('status', 'approved')
                 ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(function ($review) {
@@ -28,6 +28,7 @@ class ReviewController extends Controller
                         'rating' => $review->rating,
                         'comment' => $review->comment,
                         'reviewer_name' => $review->reviewer_name,
+                        'status' => $review->status,
                         'created_at' => $review->created_at->format('Y-m-d H:i:s'),
                     ];
                 });
@@ -73,12 +74,12 @@ class ReviewController extends Controller
             // Create the review
             $review = Review::create([
                 'business_id' => $request->business_id,
-                'user_id' => null, // No user association
+                'user_id' => auth()->id(), // Get authenticated user ID if available
                 'rating' => $request->rating,
                 'comment' => $request->comment,
                 'reviewer_name' => $request->reviewer_name,
                 'reviewer_email' => $request->reviewer_email,
-                'is_approved' => true // Auto-approve for now
+                'status' => 'approved' // Always approve reviews submitted via the authenticated endpoint
             ]);
             
             // Update the business review count
@@ -91,6 +92,7 @@ class ReviewController extends Controller
                 'rating' => $review->rating,
                 'comment' => $review->comment,
                 'reviewer_name' => $review->reviewer_name,
+                'status' => $review->status,
                 'created_at' => $review->created_at->format('Y-m-d H:i:s'),
             ];
             
@@ -121,10 +123,18 @@ class ReviewController extends Controller
     public function getBusinessReviews(int $businessId): JsonResponse
     {
         try {
-            $business = Business::findOrFail($businessId);
+            // Check if business exists
+            $business = Business::find($businessId);
+            
+            if (!$business) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Business not found'
+                ], 404);
+            }
             
             $reviews = Review::where('business_id', $businessId)
-                ->where('is_approved', true)
+                ->where('status', 'approved')
                 ->orderBy('created_at', 'desc')
                 ->get()
                 ->map(function ($review) {
@@ -189,7 +199,7 @@ class ReviewController extends Controller
                 'comment' => $request->comment,
                 'reviewer_name' => $request->reviewer_name,
                 'reviewer_email' => $request->reviewer_email,
-                'is_approved' => false // Anonymous reviews require approval
+                'status' => 'pending' // Anonymous reviews require approval
             ]);
             
             return response()->json([
