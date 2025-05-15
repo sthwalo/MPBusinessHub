@@ -35,7 +35,7 @@ jobs:
         docker-compose -f docker-compose.test.yml exec -T client npm test
         docker-compose -f docker-compose.test.yml down
 
-  deploy:
+  deploy:           
     needs: test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
