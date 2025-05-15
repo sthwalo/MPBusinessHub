@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('businesses', function (Blueprint $table) {
-            $table->enum('package_type', ['Free', 'Silver', 'Gold'])->default('Free');
+            $table->enum('package_type', ['Free','Bronze','Silver', 'Gold'])->default('Free');
             $table->integer('adverts_remaining')->default(0);
         });
     }

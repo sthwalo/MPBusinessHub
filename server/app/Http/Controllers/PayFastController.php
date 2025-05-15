@@ -22,9 +22,10 @@ class PayFastController extends Controller
         
         // Package prices (in a real app, these would come from a database)
         $packages = [
-            'basic' => 0,
-            'premium' => 199.99,
-            'enterprise' => 499.99
+            'Free' => 0,
+            'Bronze' => 199.99,
+            'Silver' => 499.99,
+            'Gold' => 999.99
         ];
         
         $amount = $packages[$request->package_id] ?? 0;
@@ -94,12 +95,12 @@ class PayFastController extends Controller
     public function return(Request $request)
     {
         // User is redirected here after successful payment
-        return redirect()->route('dashboard')->with('success', 'Payment successful! Your business package has been upgraded.');
+        return redirect('/dashboard')->with('success', 'Payment successful! Your business package has been upgraded.');
     }
     
     public function cancel(Request $request)
     {
         // User is redirected here after cancelling payment
-        return redirect()->route('dashboard')->with('error', 'Payment cancelled. Your business package has not been upgraded.');
+        return redirect('/dashboard')->with('error', 'Payment cancelled. Your business package has not been upgraded.');
     }
 }
