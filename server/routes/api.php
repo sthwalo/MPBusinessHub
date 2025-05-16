@@ -31,6 +31,10 @@ Route::get('/adverts/active', [App\Http\Controllers\AdvertController::class, 'ge
 // Dynamic route with {id} parameter must come after specific routes
 Route::get('/businesses/{id}', [BusinessController::class, 'show']);
 
+// Business categories and districts endpoints
+Route::get('/categories', [BusinessController::class, 'getCategories']);
+Route::get('/districts', [BusinessController::class, 'getDistricts']);
+
 // Authentication routes
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');

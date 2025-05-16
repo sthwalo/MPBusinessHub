@@ -54,9 +54,9 @@ class BusinessRegistrationService
 
             // Create user
             $user = $this->userRepository->createUser([
-                'name' => $data['businessName'] ?? 'User', // Use business name as user name or default to 'User'
+                'name' => $data['businessName'] ?? 'User',
                 'email' => $data['email'],
-                'password' => $data['password'], // Will be hashed by model mutator
+                'password' => $data['password'], 
             ]);
 
             // Send email verification notification

@@ -358,4 +358,48 @@ class BusinessController extends Controller
             ], 500);
         }
     }
+    
+    /**
+     * Get all unique business categories
+     * 
+     * @return JsonResponse
+     */
+    public function getCategories(): JsonResponse
+    {
+        $result = $this->searchService->getCategories();
+        
+        if (!$result['success']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $result['message']
+            ], 500);
+        }
+        
+        return response()->json([
+            'status' => 'success',
+            'data' => $result['data']
+        ]);
+    }
+    
+    /**
+     * Get all unique business districts
+     * 
+     * @return JsonResponse
+     */
+    public function getDistricts(): JsonResponse
+    {
+        $result = $this->searchService->getDistricts();
+        
+        if (!$result['success']) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $result['message']
+            ], 500);
+        }
+        
+        return response()->json([
+            'status' => 'success',
+            'data' => $result['data']
+        ]);
+    }
 }
