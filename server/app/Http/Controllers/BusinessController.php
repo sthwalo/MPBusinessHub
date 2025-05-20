@@ -402,4 +402,50 @@ class BusinessController extends Controller
             'data' => $result['data']
         ]);
     }
+    
+    /**
+     * Filter businesses based on search, category, and district
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function filter(Request $request): JsonResponse
+    {
+        $query = Business::query()->where('status', 'approved');
+        
+        // Apply search filter
+        if ($request->has('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+        
+        // Apply category filter
+        if ($request->has('category')) {
+            $query->where('category', $request->input('category'));
+        }
+        
+        // Apply district filter
+        if ($request->has('district')) {
+            $query->where('district', $request->input('district'));
+        }
+        
+        // Paginate results
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
+        $businesses = $query->paginate($perPage, ['*'], 'page', $page);
+        
+        return response()->json([
+            'status' => 'success',
+            'data' => $businesses->items(),
+            'pagination' => [
+                'total' => $businesses->total(),
+                'per_page' => $businesses->perPage(),
+                'current_page' => $businesses->currentPage(),
+                'last_page' => $businesses->lastPage()
+            ]
+        ]);
+    }
 }

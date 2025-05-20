@@ -147,3 +147,23 @@ deploy.zip
 lftp-script.txt
 deploy.ps1
 deploy.php
+
+# API Analysis Tools (Development Only)
+analyze_api_calls.py
+api_analysis_report.txt
+/api_analysis_report.txt
+*.txt
+
+# Development Journey Tools
+/tools/pattern_visualizer.py
+/tools/journey_tracker.py
+/tools/daily_analysis.py
+/tools/daily_reflection.sh
+/docs/learning/**/*.md
+/docs/learning/patterns/*
+/docs/learning/insights/*
+/docs/learning/visualizations/*
+!docs/learning/templates/
+
+# Keep templates tracked
+!docs/learning/templates/daily_entry.md

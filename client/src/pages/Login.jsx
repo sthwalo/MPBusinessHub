@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { authService } from '../services/authService'
 
 function Login({ setIsAuthenticated }) {
   const [formData, setFormData] = useState({
@@ -54,17 +55,10 @@ function Login({ setIsAuthenticated }) {
       const loadingToast = toast.loading('Logging in...');
       
       // Make the API call to our Laravel backend
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
-        })
-      });
+ const response = await authService.login({
+   email: formData.email,
+   password: formData.password
+ });
       
       // Clear loading toast
       toast.dismiss(loadingToast);

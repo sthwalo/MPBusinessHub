@@ -18,7 +18,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:3000', 'http://localhost:8000', 'https://mpbusinesshub.co.za', 'https://mpbh.netlify.app'],
+    'allowed_origins' => ['http://localhost:3000', 'http://localhost:8000', 'http://localhost:8001', 'https://mpbusinesshub.co.za', 'https://mpbh.netlify.app'],
 
     'allowed_origins_patterns' => [],
 
