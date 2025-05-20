@@ -55,21 +55,21 @@ function PricingTable({ businessData, onPlanSelected }) {
               name: 'Bronze',
               price_monthly: 299,
               price_annual: 3229,
-              advert_limit: 2
+              advert_limit: 1
             },
             {
               id: 'silver',
               name: 'Silver',
               price_monthly: 599,
               price_annual: 6469,
-              advert_limit: 5,
+              advert_limit: 2,
             },
             {
               id: 'gold',
               name: 'Gold',
               price_monthly: 999,
               price_annual: 10789,
-              advert_limit: 10
+              advert_limit: 4
             }
           ];
         }

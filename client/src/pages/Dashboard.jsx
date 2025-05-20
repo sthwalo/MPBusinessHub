@@ -59,6 +59,50 @@ function Dashboard() {
     }));
   };
 
+  // Function to refresh business data
+  const refreshBusinessData = async () => {
+    try {
+      // Get the auth token from localStorage
+      const token = localStorage.getItem('mpbh_token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+      
+      // Fetch business details from our Laravel backend
+      const response = await fetch('/api/business/details', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('mpbh_token');
+          navigate('/login');
+          return;
+        }
+        
+        throw new Error(`Failed to fetch business data: ${response.status}`);
+      }
+      
+      // Parse the response data
+      const result = await response.json();
+      
+      if (result.status === 'success' && result.data) {
+        // Update the business data
+        setBusinessData(result.data);
+      } else {
+        throw new Error(result.message || 'Failed to fetch business data');
+      }
+    } catch (error) {
+      console.error('Error refreshing business data:', error);
+    }
+  };
+
   useEffect(() => {
     // Fetch the user's business data from our API
     const fetchBusinessData = async () => {
@@ -374,12 +418,13 @@ function Dashboard() {
                 <Route path="/profile" element={<BusinessProfile businessData={businessData} updateBusinessData={updateBusinessData} />} />
                 <Route path="/hours" element={<BusinessHours businessData={businessData} />} />
                 <Route path="/products" element={<ProductsManagement businessData={businessData} />} />
-                <Route path="/adverts" element={<AdvertsManagement businessData={businessData} />} />
+<Route path="/adverts" element={<AdvertsManagement businessData={businessData} onAdvertCreated={refreshBusinessData} />} />
                 <Route path="/payments" element={<PaymentHistory businessData={businessData} />} />
                 <Route path="/upgrade" element={<UpgradePlan businessData={businessData} onUpgrade={handlePackageUpgrade} />} />
                 <Route path="/session-management" element={<SessionManagement />} />
                 <Route path="/social-media" element={<SocialMediaManagement businessData={businessData} onUpdate={updateBusinessData} />} />
               </Routes>
+              
             ) : (
               <div className="text-center py-12">
                 <h2 className="text-2xl font-bold mb-4">No Business Profile Found</h2>

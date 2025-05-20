@@ -182,7 +182,7 @@ const AdvertCard = ({ advert, onDelete }) => {
 }
 
 // Main component
-function AdvertsManagement({ businessData }) {
+function AdvertsManagement({ businessData, onAdvertCreated }) {
   const [adverts, setAdverts] = useState([])
   const [loading, setLoading] = useState(true)
   const [formVisible, setFormVisible] = useState(false)
@@ -213,21 +213,26 @@ function AdvertsManagement({ businessData }) {
 
   const handleCreateAdvert = async (formData) => {
     try {
-      const response = await advertsApi.create(formData)
+      setLoading(true);
+      const response = await advertsApi.create(formData);
       
       // Add the new advert to the list
-      setAdverts([...adverts, response.data])
+      setAdverts(prev => [response.data, ...prev]);
       
-      // Update remaining adverts count in the parent component
-      businessData.adverts_remaining -= 1
+      // Update the adverts remaining count in the parent component
+      if (typeof onAdvertCreated === 'function') {
+        onAdvertCreated();
+      }
       
-      setSuccessMessage('Advert created successfully!')
-      setFormVisible(false)
+      setSuccessMessage('Advert created successfully!');
+      setFormVisible(false);
+      setErrors({});
     } catch (error) {
-      console.error('Error creating advert:', error)
-      setErrors({ form: error.message || 'Failed to create advert' })
+      setErrors({ form: error.message || 'Failed to create advert' });
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   const handleDeleteAdvert = async (advertId) => {
     if (!window.confirm('Are you sure you want to delete this advert?')) return
