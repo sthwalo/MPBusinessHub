@@ -55,38 +55,33 @@ function Login({ setIsAuthenticated }) {
       const loadingToast = toast.loading('Logging in...');
       
       // Make the API call to our Laravel backend
- const response = await authService.login({
-   email: formData.email,
-   password: formData.password
- });
+      const response = await authService.login({
+        email: formData.email,
+        password: formData.password
+      });
       
       // Clear loading toast
       toast.dismiss(loadingToast);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Login failed');
-      }
-      
-      // Parse the response data
-      const data = await response.json();
-      console.log('Login successful:', data);
+      // The response is already processed by the axios interceptor
+      // and contains the data directly
+      console.log('Login successful:', response);
       
       // Store the token and user info
-      localStorage.setItem('mpbh_token', data.data.token);
+      localStorage.setItem('mpbh_token', response.data.token);
       
       // Handle case where user might not have a business yet
       const userData = {
-        id: data.data.user.id,
-        name: data.data.user.name,
-        email: data.data.user.email
+        id: response.data.user.id,
+        name: response.data.user.name,
+        email: response.data.user.email
       };
       
       // Add business data if it exists
-      if (data.data.business) {
-        userData.businessId = data.data.business.id;
-        userData.businessName = data.data.business.name;
-        userData.businessStatus = data.data.business.status;
+      if (response.data.business) {
+        userData.businessId = response.data.business.id;
+        userData.businessName = response.data.business.name;
+        userData.businessStatus = response.data.business.status;
       }
       
       localStorage.setItem('mpbh_user', JSON.stringify(userData));

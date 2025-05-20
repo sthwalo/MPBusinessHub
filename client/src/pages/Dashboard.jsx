@@ -26,11 +26,17 @@ function Dashboard() {
 
   // Function to update business data after profile update
   const updateBusinessData = (updatedData) => {
-    setBusinessData(prevData => ({
-      ...prevData,
-      ...updatedData
-    }));
-    localStorage.setItem('simulatedBusinessData', JSON.stringify(prevData));
+    setBusinessData(prevData => {
+      const newData = {
+        ...prevData,
+        ...updatedData
+      };
+      
+      // Store the updated data in localStorage
+      localStorage.setItem('simulatedBusinessData', JSON.stringify(newData));
+      
+      return newData;
+    });
   };
 
   // Make the updateBusinessData function available globally for the BusinessProfile component
