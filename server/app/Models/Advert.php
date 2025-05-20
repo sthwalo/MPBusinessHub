@@ -17,11 +17,15 @@ class Advert extends Model
         'start_date',
         'end_date',
         'status',
+        'adverts_remaining',
+        'last_adverts_reset',
+        'package_type'
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'last_adverts_reset' => 'date',
     ];
 
     /**

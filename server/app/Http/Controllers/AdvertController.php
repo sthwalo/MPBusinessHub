@@ -8,9 +8,16 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use App\Services\AdvertService;
 
 class AdvertController extends Controller
 {
+    protected $advertService;
+
+    public function __construct(AdvertService $advertService)
+    {
+        $this->advertService = $advertService;
+    }
     /**
      * Get all adverts for the authenticated user's business
      */
@@ -24,6 +31,17 @@ class AdvertController extends Controller
                 'status' => 'error',
                 'message' => 'Business not found'
             ], 404);
+        }
+
+        // Check and reset monthly count if needed
+        $this->advertService->checkAndResetMonthlyCount($business);
+        
+        // Check if business has adverts remaining
+        if ($business->adverts_remaining <= 0) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No adverts remaining. Please upgrade your package.'
+            ], 403);
         }
         
         $adverts = Advert::where('business_id', $business->id)
@@ -42,10 +60,12 @@ class AdvertController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
+            'business_id' => 'required|exists:businesses,id',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'startDate' => 'required|date',
             'endDate' => 'required|date|after:startDate',
+            'status' => 'required|in:active,scheduled',
         ]);
         
         if ($validator->fails()) {
@@ -121,6 +141,10 @@ class AdvertController extends Controller
         }
         
         $advert->delete();
+
+         // Increment adverts remaining when deleting
+         $this->advertService->incrementAdvertCount($business);
+        
         
         return response()->json([
             'status' => 'success',
