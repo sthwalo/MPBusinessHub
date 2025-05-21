@@ -89,13 +89,15 @@ const ContactInfo = ({ business }) => {
       )}
       
       {/* Social Media Links */}
-      {business.contact.social_media && Object.keys(business.contact.social_media).length > 0 && (
+      {(business.contact?.social_media || business.social_media) && 
+        (Object.keys(business.contact?.social_media || {}).length > 0 || 
+         Object.keys(business.social_media || {}).length > 0) && (
         <div className="mt-4">
           <h3 className="text-md font-semibold mb-2">Social Media</h3>
           <div className="flex flex-wrap gap-3">
-            {business.contact.social_media.facebook && (
+            {(business.contact?.social_media?.facebook || business.social_media?.facebook) && (
               <a 
-                href={business.contact.social_media.facebook} 
+                href={business.contact?.social_media?.facebook || business.social_media?.facebook} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:text-blue-800"
@@ -104,9 +106,9 @@ const ContactInfo = ({ business }) => {
                 <FaFacebook size={24} />
               </a>
             )}
-            {business.contact.social_media.instagram && (
+            {(business.contact?.social_media?.instagram || business.social_media?.instagram) && (
               <a 
-                href={business.contact.social_media.instagram} 
+                href={business.contact?.social_media?.instagram || business.social_media?.instagram} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-pink-600 hover:text-pink-800"
@@ -115,9 +117,9 @@ const ContactInfo = ({ business }) => {
                 <FaInstagram size={24} />
               </a>
             )}
-            {business.contact.social_media.twitter && (
+            {(business.contact?.social_media?.twitter || business.social_media?.twitter) && (
               <a 
-                href={business.contact.social_media.twitter} 
+                href={business.contact?.social_media?.twitter || business.social_media?.twitter} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-blue-400 hover:text-blue-600"
@@ -126,9 +128,9 @@ const ContactInfo = ({ business }) => {
                 <FaTwitter size={24} />
               </a>
             )}
-            {business.contact.social_media.linkedin && (
+            {(business.contact?.social_media?.linkedin || business.social_media?.linkedin) && (
               <a 
-                href={business.contact.social_media.linkedin} 
+                href={business.contact?.social_media?.linkedin || business.social_media?.linkedin} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-blue-700 hover:text-blue-900"
@@ -137,9 +139,9 @@ const ContactInfo = ({ business }) => {
                 <FaLinkedin size={24} />
               </a>
             )}
-            {business.contact.social_media.youtube && (
+            {(business.contact?.social_media?.youtube || business.social_media?.youtube) && (
               <a 
-                href={business.contact.social_media.youtube} 
+                href={business.contact?.social_media?.youtube || business.social_media?.youtube} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-red-600 hover:text-red-800"
@@ -148,9 +150,9 @@ const ContactInfo = ({ business }) => {
                 <FaYoutube size={24} />
               </a>
             )}
-            {business.contact.social_media.tiktok && (
+            {(business.contact?.social_media?.tiktok || business.social_media?.tiktok) && (
               <a 
-                href={business.contact.social_media.tiktok} 
+                href={business.contact?.social_media?.tiktok || business.social_media?.tiktok} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-black hover:text-gray-700"
