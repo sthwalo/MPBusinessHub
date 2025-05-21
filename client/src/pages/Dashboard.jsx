@@ -418,7 +418,7 @@ function Dashboard() {
                 <Route path="/profile" element={<BusinessProfile businessData={businessData} updateBusinessData={updateBusinessData} />} />
                 <Route path="/hours" element={<BusinessHours businessData={businessData} />} />
                 <Route path="/products" element={<ProductsManagement businessData={businessData} />} />
-<Route path="/adverts" element={<AdvertsManagement businessData={businessData} onAdvertCreated={refreshBusinessData} />} />
+                <Route path="/adverts" element={<AdvertsManagement businessData={businessData} onAdvertCreated={refreshBusinessData} />} />
                 <Route path="/payments" element={<PaymentHistory businessData={businessData} />} />
                 <Route path="/upgrade" element={<UpgradePlan businessData={businessData} onUpgrade={handlePackageUpgrade} />} />
                 <Route path="/session-management" element={<SessionManagement />} />

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { advertsApi } from '../../utils/api'
 
 // Form component for creating/editing adverts
-const AdvertForm = ({ onSubmit, onCancel, hasAdverts }) => {
+const AdvertForm = ({ onSubmit, onCancel, hasAdverts, businessData }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -60,8 +60,10 @@ const AdvertForm = ({ onSubmit, onCancel, hasAdverts }) => {
     // Format dates to ensure they're in YYYY-MM-DD format
     const formattedData = {
       ...formData,
+      business_id: businessData.id,
       startDate: new Date(formData.startDate).toISOString().split('T')[0],
-      endDate: new Date(formData.endDate).toISOString().split('T')[0]
+      endDate: new Date(formData.endDate).toISOString().split('T')[0],
+      status: 'scheduled'
     }
     
     onSubmit(formattedData)
@@ -321,6 +323,7 @@ function AdvertsManagement({ businessData, onAdvertCreated }) {
           onSubmit={handleCreateAdvert} 
           onCancel={() => setFormVisible(false)} 
           hasAdverts={hasAdverts} 
+          businessData={businessData}
         />
       )}
 
